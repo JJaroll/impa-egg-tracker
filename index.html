@@ -56,6 +56,10 @@
   </script>
 
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .view.hidden, .view:not(.active) { display: none !important; }
+    .view.active { display: flex !important; }
+  </style>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>🥚</text></svg>">
 </head>
 <body class="bg-app text-main font-body h-screen flex justify-center p-2 sm:p-3 md:p-4 overflow-hidden">
@@ -145,7 +149,7 @@
       </header>
 
       <!-- ============ VISTA 1: DASHBOARD (NIDADA) ============ -->
-      <div id="view-dashboard" class="view active overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-4 pr-1">
+      <div id="view-dashboard" class="view active flex-col gap-4 overflow-y-auto custom-scrollbar flex-1 pr-1" style="display: flex;">
         
         <!-- Franja de Métricas / Estadísticas -->
         <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0" aria-label="Estadísticas de la nidada">
@@ -226,7 +230,7 @@
       </div>
 
       <!-- ============ VISTA 2: VISOR DE DESARROLLO EMBRIONARIO ============ -->
-      <div id="view-embryo" class="view overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-4 pr-1">
+      <div id="view-embryo" class="view flex-col gap-4 overflow-y-auto custom-scrollbar flex-1 pr-1" style="display: none;">
         <div class="glass-card p-5 flex flex-col gap-5">
           
           <div class="flex flex-wrap items-center justify-between gap-3 border-b border-theme pb-4">
@@ -279,7 +283,7 @@
       </div>
 
       <!-- ============ VISTA 3: GUÍA DE CUIDADOS ============ -->
-      <div id="view-care" class="view overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-4 pr-1">
+      <div id="view-care" class="view flex-col gap-4 overflow-y-auto custom-scrollbar flex-1 pr-1" style="display: none;">
         <div class="glass-card p-5 flex flex-col gap-5">
           <div>
             <h2 class="font-display font-bold text-xl text-main">Guía de Incubación y Cría: <em>Nymphicus hollandicus</em></h2>
@@ -517,9 +521,19 @@
   <script>
     // Navegación entre vistas
     function showView(name) {
-      document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-      const target = document.getElementById('view-' + name);
-      if (target) target.classList.add('active');
+      const views = ['dashboard', 'embryo', 'care'];
+      views.forEach(v => {
+        const el = document.getElementById('view-' + v);
+        if (el) {
+          if (v === name) {
+            el.classList.add('active');
+            el.style.setProperty('display', 'flex', 'important');
+          } else {
+            el.classList.remove('active');
+            el.style.setProperty('display', 'none', 'important');
+          }
+        }
+      });
       
       document.querySelectorAll('.nav-item').forEach(el => {
         const isActive = el.dataset.view === name;
@@ -629,6 +643,7 @@
       selectTheme(theme);
       selectColor(color);
       applyLanguage(lang);
+      showView('dashboard');
     })();
   </script>
 </body>
