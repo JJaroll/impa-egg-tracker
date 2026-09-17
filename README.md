@@ -61,16 +61,14 @@ git commit -m "feat: Monitor de incubación de huevos de Impa para GitHub Pages"
 4. Haz clic en **Create repository**.
 
 ### Paso 3: Subir tu código a GitHub
-Ejecuta en tu terminal los comandos que te indica GitHub (reemplazando tu usuario):
-
 ```bash
 git branch -M main
-git remote add origin https://github.com/TU_USUARIO/impa-egg-tracker.git
+git remote add origin https://github.com/JJaroll/impa-egg-tracker.git
 git push -u origin main
 ```
 
 ### Paso 4: Activar GitHub Pages
-1. En tu repositorio de GitHub, ve a la pestaña **Settings** (Configuración).
+1. En tu repositorio [github.com/JJaroll/impa-egg-tracker](https://github.com/JJaroll/impa-egg-tracker), ve a la pestaña **Settings** (Configuración).
 2. En la barra lateral izquierda, haz clic en **Pages**.
 3. En la sección **Build and deployment**:
    - **Source**: Selecciona `Deploy from a branch`.
@@ -78,7 +76,7 @@ git push -u origin main
 4. Haz clic en **Save**.
 
 ¡Listo! En unos 60 segundos tu sitio estará activo en:
-`https://TU_USUARIO.github.io/impa-egg-tracker/`
+**`https://jjaroll.github.io/impa-egg-tracker/`**
 
 ---
 
