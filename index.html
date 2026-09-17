@@ -62,33 +62,52 @@
   <div class="w-full h-full max-w-[1920px] mx-auto flex gap-3 md:gap-4">
 
     <!-- ============ SIDEBAR: Carcasa fija estilo Cicada ============ -->
-    <aside class="h-full w-[76px] sm:w-[86px] md:w-[98px] bg-sidebar rounded-[20px] flex flex-col items-center py-5 md:py-7 z-50 text-sidebar shrink-0 shadow-lg">
+    <aside class="h-full w-[76px] sm:w-[86px] md:w-[98px] bg-sidebar rounded-[20px] flex flex-col items-center py-5 md:py-7 z-50 text-sidebar shrink-0 shadow-lg select-none">
       <!-- Logo / Avatar Impa clicable (abre modal "Sobre") -->
-      <div class="mb-6 md:mb-8 w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden border-2 border-accent/40 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity shadow-md" onclick="openAbout()" title="Sobre este proyecto" data-i18n-title="about_tooltip">
+      <div class="mb-6 md:mb-8 w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden border-2 border-accent/40 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity shadow-md shrink-0" onclick="openAbout()" title="Sobre este proyecto" data-i18n-title="about_tooltip">
         <img src="assets/impa.jpg" alt="Ninfa Impa" class="w-full h-full object-cover">
       </div>
 
       <!-- Navegación lateral principal -->
       <nav class="flex-1 w-full flex flex-col items-stretch gap-3">
-        <button type="button" class="nav-item nav-item-active flex flex-col items-center py-3 rounded-2xl transition-all w-[68px] md:w-[82px] mx-auto" data-view="dashboard" onclick="showView('dashboard')">
-          <span class="material-symbols-outlined text-[24px] mb-1">nest_cam</span>
-          <span class="font-label-caps text-[10px] md:text-[11px] font-bold tracking-wider" data-i18n="nav_dashboard">NIDADA</span>
+        <button type="button" class="nav-item nav-item-active flex flex-col items-center py-3 rounded-2xl transition-all w-[68px] md:w-[82px] mx-auto text-center" data-view="dashboard" onclick="showView('dashboard')">
+          <svg class="w-6 h-6 mb-1.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C8 2 5 7 5 13a7 7 0 0 0 14 0c0-6-3-11-7-11z"/>
+            <path d="M3 20c3 1.5 6 1.5 9 1.5s6 0 9-1.5"/>
+          </svg>
+          <span class="font-label-caps text-[10px] md:text-[11px] font-bold tracking-wider leading-none" data-i18n="nav_dashboard">NIDADA</span>
         </button>
-        <button type="button" class="nav-item nav-item-inactive flex flex-col items-center py-3 rounded-2xl transition-all w-[68px] md:w-[82px] mx-auto" data-view="embryo" onclick="showView('embryo')">
-          <span class="material-symbols-outlined text-[24px] mb-1">biotech</span>
-          <span class="font-label-caps text-[10px] md:text-[11px] font-bold tracking-wider" data-i18n="nav_embryo">EMBRIÓN</span>
+        <button type="button" class="nav-item nav-item-inactive flex flex-col items-center py-3 rounded-2xl transition-all w-[68px] md:w-[82px] mx-auto text-center" data-view="embryo" onclick="showView('embryo')">
+          <svg class="w-6 h-6 mb-1.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 18h8"/>
+            <path d="M3 22h18"/>
+            <path d="M14 22a7 7 0 1 0 0-14h-1"/>
+            <path d="M9 14h2"/>
+            <path d="M9 12a2 2 0 1 1-2-2c1 0 2 1 2 2z"/>
+          </svg>
+          <span class="font-label-caps text-[10px] md:text-[11px] font-bold tracking-wider leading-none" data-i18n="nav_embryo">EMBRIÓN</span>
         </button>
-        <button type="button" class="nav-item nav-item-inactive flex flex-col items-center py-3 rounded-2xl transition-all w-[68px] md:w-[82px] mx-auto" data-view="care" onclick="showView('care')">
-          <span class="material-symbols-outlined text-[24px] mb-1">menu_book</span>
-          <span class="font-label-caps text-[10px] md:text-[11px] font-bold tracking-wider" data-i18n="nav_care">GUÍA</span>
+        <button type="button" class="nav-item nav-item-inactive flex flex-col items-center py-3 rounded-2xl transition-all w-[68px] md:w-[82px] mx-auto text-center" data-view="care" onclick="showView('care')">
+          <svg class="w-6 h-6 mb-1.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+          <span class="font-label-caps text-[10px] md:text-[11px] font-bold tracking-wider leading-none" data-i18n="nav_care">GUÍA</span>
         </button>
       </nav>
 
       <!-- Pie del Sidebar: Ajustes & Estado en vivo -->
-      <div class="mt-auto flex flex-col items-center gap-5">
-        <button type="button" onclick="openSettings()" class="material-symbols-outlined text-sidebar/60 hover:text-sidebar transition-colors text-[24px]" title="Ajustes" data-i18n-title="settings_tooltip">settings</button>
+      <div class="mt-auto flex flex-col items-center gap-5 shrink-0">
+        <button type="button" onclick="openSettings()" class="text-sidebar/60 hover:text-sidebar transition-colors p-1" title="Ajustes" data-i18n-title="settings_tooltip">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
         <div class="relative w-10 h-10 rounded-xl bg-black/10 flex items-center justify-center" title="Monitoreo activo" data-i18n-title="connection_tooltip">
-          <span class="material-symbols-outlined text-[20px] text-sidebar/60">vital_signs</span>
+          <svg class="w-5 h-5 text-sidebar/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
           <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-500 border-2 border-sidebar animate-pulse"></span>
         </div>
       </div>
@@ -111,15 +130,15 @@
 
         <div class="flex items-center gap-2">
           <button type="button" onclick="app.openAddEggModal()" class="btn-primary px-3 sm:px-4 py-2 rounded-xl text-xs font-label-caps tracking-wider flex items-center gap-1.5 shadow-md">
-            <span class="material-symbols-outlined text-[18px]">add</span>
-            <span class="hidden sm:inline" data-i18n="btn_add_egg">+ REGISTRAR HUEVO</span>
-            <span class="sm:hidden">+ HUEVO</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            <span class="hidden sm:inline" data-i18n="btn_add_egg">REGISTRAR HUEVO</span>
+            <span class="sm:hidden">HUEVO</span>
           </button>
           <button type="button" onclick="app.exportBackup()" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1" title="Respaldar datos JSON">
-            <span class="material-symbols-outlined text-[18px]">download</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
           </button>
           <label for="input-import-backup" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 cursor-pointer" title="Restaurar datos JSON">
-            <span class="material-symbols-outlined text-[18px]">upload</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
           </label>
           <input type="file" id="input-import-backup" accept=".json" class="hidden">
         </div>
@@ -131,8 +150,10 @@
         <!-- Franja de Métricas / Estadísticas -->
         <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0" aria-label="Estadísticas de la nidada">
           <div class="glass-card p-4 flex items-center gap-3.5">
-            <div class="w-11 h-11 rounded-xl bg-accent/15 flex items-center justify-center text-accent text-xl">
-              <span class="material-symbols-outlined">egg</span>
+            <div class="w-11 h-11 rounded-xl bg-accent/15 flex items-center justify-center text-accent text-xl shrink-0">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2C8 2 5 7 5 13a7 7 0 0 0 14 0c0-6-3-11-7-11z"/>
+              </svg>
             </div>
             <div>
               <div class="font-data font-bold text-2xl text-main leading-tight" id="stat-total-eggs">0</div>
@@ -141,8 +162,10 @@
           </div>
 
           <div class="glass-card p-4 flex items-center gap-3.5">
-            <div class="w-11 h-11 rounded-xl bg-green-500/15 flex items-center justify-center text-green-400 text-xl">
-              <span class="material-symbols-outlined">favorite</span>
+            <div class="w-11 h-11 rounded-xl bg-green-500/15 flex items-center justify-center text-green-400 text-xl shrink-0">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
             </div>
             <div>
               <div class="font-data font-bold text-2xl text-main leading-tight" id="stat-fertile-eggs">0</div>
@@ -151,8 +174,11 @@
           </div>
 
           <div class="glass-card p-4 flex items-center gap-3.5">
-            <div class="w-11 h-11 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-400 text-xl">
-              <span class="material-symbols-outlined">flashlight_on</span>
+            <div class="w-11 h-11 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-400 text-xl shrink-0">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6l-3.5 3.5M6 18l3.5-3.5M8.5 8.5L4 4M20 20l-4.5-4.5"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
             </div>
             <div>
               <div class="font-data font-bold text-2xl text-main leading-tight" id="stat-pending-eggs">0</div>
@@ -161,8 +187,8 @@
           </div>
 
           <div class="glass-card p-4 flex items-center gap-3.5">
-            <div class="w-11 h-11 rounded-xl bg-yellow-500/15 flex items-center justify-center text-yellow-300 text-xl">
-              <span class="material-symbols-outlined">pest_control_rodent</span>
+            <div class="w-11 h-11 rounded-xl bg-yellow-500/15 flex items-center justify-center text-yellow-300 text-xl shrink-0">
+              <span class="text-2xl leading-none">🐣</span>
             </div>
             <div>
               <div class="font-data font-bold text-2xl text-main leading-tight" id="stat-hatched-eggs">0</div>
@@ -174,7 +200,7 @@
         <!-- Banner de Estimación: Próximo Huevo (+48h) -->
         <section id="next-egg-banner" class="glass-card p-4 flex flex-wrap items-center justify-between gap-3 border-accent/30 bg-gradient-to-r from-accent/10 to-transparent shrink-0">
           <div class="flex items-center gap-3">
-            <span class="px-2 py-1 rounded bg-accent text-white font-label-caps font-bold text-[10px] tracking-wider uppercase" data-i18n="banner_next_egg_tag">PRÓXIMA PUESTA</span>
+            <span class="px-2.5 py-1 rounded-md bg-accent text-white font-label-caps font-bold text-[10px] tracking-wider uppercase" data-i18n="banner_next_egg_tag">PRÓXIMA PUESTA</span>
             <div>
               <h3 id="next-egg-title" class="font-display font-bold text-sm sm:text-base text-main">Próximo huevo estimado: Huevo #2</h3>
               <p id="next-egg-desc" class="text-xs text-muted font-label-caps">Las ninfas suelen poner cada ~48 horas.</p>
@@ -222,13 +248,20 @@
           </div>
 
           <!-- Selector Deslizante de Día (0 al 21) -->
-          <div class="glass-card p-4 bg-input/40 flex flex-col gap-2">
+          <div class="glass-card p-4 bg-input/40 flex flex-col gap-3">
             <div class="flex items-center justify-between text-xs font-label-caps">
               <span class="text-muted">DÍA 0 (PUESTA)</span>
-              <span class="text-accent font-bold text-base font-data" id="slider-day-val">DÍA 5</span>
+              <span class="text-accent font-bold text-base font-data px-3 py-0.5 rounded-lg bg-black/40 border border-accent/40" id="slider-day-val">DÍA 5</span>
               <span class="text-muted">DÍA 21 (ECLOSIÓN)</span>
             </div>
             <input type="range" id="dev-day-slider" class="ui-range" min="0" max="21" value="5" step="1">
+            <div class="flex flex-wrap gap-2 pt-2 border-t border-theme">
+              <button type="button" onclick="app.setVisualizerDay(0); document.getElementById('dev-day-slider').value=0;" class="btn-secondary px-2.5 py-1 rounded-lg text-[10px] font-label-caps">Día 0 (Puesta)</button>
+              <button type="button" onclick="app.setVisualizerDay(5); document.getElementById('dev-day-slider').value=5;" class="btn-secondary px-2.5 py-1 rounded-lg text-[10px] font-label-caps text-accent font-bold border border-accent/40">Día 5 (Ovoscopia ⭐)</button>
+              <button type="button" onclick="app.setVisualizerDay(10); document.getElementById('dev-day-slider').value=10;" class="btn-secondary px-2.5 py-1 rounded-lg text-[10px] font-label-caps">Día 10 (Mitad)</button>
+              <button type="button" onclick="app.setVisualizerDay(18); document.getElementById('dev-day-slider').value=18;" class="btn-secondary px-2.5 py-1 rounded-lg text-[10px] font-label-caps text-amber-400 font-bold border border-amber-400/40">Día 18 (Picaje ⭐)</button>
+              <button type="button" onclick="app.setVisualizerDay(21); document.getElementById('dev-day-slider').value=21;" class="btn-secondary px-2.5 py-1 rounded-lg text-[10px] font-label-caps text-green-400 font-bold border border-green-400/40">Día 21 (Eclosión 🐣)</button>
+            </div>
           </div>
 
           <!-- Layout de Dos Columnas: SVG Dinámico + Ficha Biológica -->
@@ -544,7 +577,7 @@
         settings_title: "Ajustes", settings_language_title: "IDIOMA",
         settings_theme_title: "TEMA", settings_theme_dark: "Oscuro", settings_theme_light: "Claro",
         settings_color_title: "COLOR DE ACENTO",
-        btn_add_egg: "+ REGISTRAR HUEVO",
+        btn_add_egg: "REGISTRAR HUEVO",
         stat_total: "HUEVOS EN NIDO", stat_fertile: "FÉRTILES CONFIRMADOS",
         stat_candling: "PENDIENTES OVOSCOPIA", stat_hatched: "ECLOSIONADOS",
         banner_next_egg_tag: "PRÓXIMA PUESTA",
@@ -557,7 +590,7 @@
         settings_title: "Settings", settings_language_title: "LANGUAGE",
         settings_theme_title: "THEME", settings_theme_dark: "Dark", settings_theme_light: "Light",
         settings_color_title: "ACCENT COLOR",
-        btn_add_egg: "+ ADD EGG",
+        btn_add_egg: "ADD EGG",
         stat_total: "TOTAL EGGS", stat_fertile: "FERTILE CONFIRMED",
         stat_candling: "PENDING CANDLING", stat_hatched: "HATCHED",
         banner_next_egg_tag: "NEXT EGG",
