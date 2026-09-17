@@ -1,7 +1,8 @@
 {
-  "updatedAt": "2026-09-17T19:32:00.000Z",
+  "updatedAt": "2026-09-17T20:43:00.000Z",
   "species": "Nymphicus hollandicus",
   "mother": "Impa",
+  "adminPinHash": "4597da85b54b0215a8b5d536291aab6f1fb48952dd97698ee26a2fab58b8cdec",
   "eggs": [
     {
       "id": "egg_1_impa",

@@ -23,8 +23,9 @@ class EggTrackerApp {
 
     // Sistema de Roles: Modo Lectura (visitante) vs Modo Administrador (dueño de Impa)
     this.isAdmin = false;
-    // PIN por defecto: 2026 (hash SHA-256 precalculado para no exponer texto plano)
-    this.DEFAULT_PIN_HASH = '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab';
+    // Clave maestra autorizada: Zelda2096 (hash SHA-256 precalculado)
+    this.DEFAULT_PIN_HASH = '4597da85b54b0215a8b5d536291aab6f1fb48952dd97698ee26a2fab58b8cdec';
+    this.activePinHash = this.DEFAULT_PIN_HASH;
 
     this.init();
   }
@@ -77,13 +78,18 @@ class EggTrackerApp {
       const resp = await fetch(`data/nest.json?t=${Date.now()}`);
       if (resp.ok) {
         const nestData = await resp.json();
-        if (nestData && Array.isArray(nestData.eggs) && nestData.eggs.length > 0) {
-          this.eggs = nestData.eggs;
-          // Si es admin, guardar copia local
-          if (this.isAdmin) {
-            this.saveData();
+        if (nestData) {
+          if (nestData.adminPinHash) {
+            this.activePinHash = nestData.adminPinHash;
           }
-          return;
+          if (Array.isArray(nestData.eggs) && nestData.eggs.length > 0) {
+            this.eggs = nestData.eggs;
+            // Si es admin, guardar copia local
+            if (this.isAdmin) {
+              this.saveData();
+            }
+            return;
+          }
         }
       }
     } catch (err) {
@@ -172,9 +178,14 @@ class EggTrackerApp {
 
     try {
       const hash = await this.sha256(pin);
-      const authorizedHash = localStorage.getItem('impa_admin_custom_pin_hash') || this.DEFAULT_PIN_HASH;
+      const authorizedHash = this.activePinHash || this.DEFAULT_PIN_HASH;
+      const customHash = localStorage.getItem('impa_admin_custom_pin_hash');
 
-      if (hash === authorizedHash) {
+      if (hash === authorizedHash || hash === this.DEFAULT_PIN_HASH || (customHash && hash === customHash)) {
+        // Limpiar hash local anterior si coincide con la clave maestra actual
+        if (hash === this.DEFAULT_PIN_HASH && customHash) {
+          localStorage.removeItem('impa_admin_custom_pin_hash');
+        }
         this.isAdmin = true;
         sessionStorage.setItem('impa_admin_auth', 'true');
         if (remember) {
@@ -308,32 +319,34 @@ class EggTrackerApp {
   }
 
   async promptChangePin() {
-    const currentPin = prompt('Ingresa tu PIN actual:');
+    const currentPin = prompt('Ingresa tu clave actual:');
     if (!currentPin) return;
 
     const currentHash = await this.sha256(currentPin.trim());
-    const authorizedHash = localStorage.getItem('impa_admin_custom_pin_hash') || this.DEFAULT_PIN_HASH;
+    const authorizedHash = this.activePinHash || this.DEFAULT_PIN_HASH;
+    const customHash = localStorage.getItem('impa_admin_custom_pin_hash');
 
-    if (currentHash !== authorizedHash) {
-      alert('El PIN actual es incorrecto.');
+    if (currentHash !== authorizedHash && currentHash !== this.DEFAULT_PIN_HASH && currentHash !== customHash) {
+      alert('La clave actual es incorrecta.');
       return;
     }
 
-    const newPin = prompt('Ingresa tu NUEVO PIN (4 a 12 dígitos o caracteres):');
+    const newPin = prompt('Ingresa tu NUEVA clave de seguridad:');
     if (!newPin || newPin.trim().length < 4) {
-      alert('El PIN debe tener al menos 4 caracteres.');
+      alert('La clave debe tener al menos 4 caracteres.');
       return;
     }
 
-    const confirmPin = prompt('Confirma tu NUEVO PIN:');
+    const confirmPin = prompt('Confirma tu NUEVA clave de seguridad:');
     if (newPin !== confirmPin) {
-      alert('Los PINs no coinciden. No se realizaron cambios.');
+      alert('Las claves no coinciden. No se realizaron cambios.');
       return;
     }
 
     const newHash = await this.sha256(newPin.trim());
+    this.activePinHash = newHash;
     localStorage.setItem('impa_admin_custom_pin_hash', newHash);
-    this.showToast('¡PIN de seguridad actualizado correctamente!', 'key');
+    this.showToast('¡Clave actualizada! Pulsa "Publicar" para sincronizarla en otros navegadores.', 'key');
   }
 
   setupVisualizer() {
@@ -1079,6 +1092,7 @@ class EggTrackerApp {
       updatedAt: new Date().toISOString(),
       species: "Nymphicus hollandicus",
       mother: "Impa",
+      adminPinHash: this.activePinHash || this.DEFAULT_PIN_HASH,
       eggs: this.eggs
     };
     return JSON.stringify(payload, null, 2);

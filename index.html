@@ -537,11 +537,11 @@
 
       <form id="form-admin-login" onsubmit="event.preventDefault(); app.submitAdminPin();" class="flex flex-col gap-3.5 mt-1">
         <div class="flex flex-col gap-1.5">
-          <label for="input-admin-pin" class="text-[11px] font-label-caps text-muted font-bold tracking-wider">PIN DE SEGURIDAD</label>
-          <input type="password" id="input-admin-pin" maxlength="16" class="ui-input p-3 text-center text-xl tracking-[0.3em] font-data font-bold rounded-xl" placeholder="••••" autocomplete="current-password">
+          <label for="input-admin-pin" class="text-[11px] font-label-caps text-muted font-bold tracking-wider">CLAVE DE SEGURIDAD</label>
+          <input type="password" id="input-admin-pin" maxlength="32" class="ui-input p-3 text-center text-lg tracking-widest font-data font-bold rounded-xl" placeholder="••••••••" autocomplete="current-password">
           <p id="admin-pin-error" class="text-xs text-red-400 font-medium hidden flex items-center gap-1 mt-1">
             <span class="material-symbols-outlined text-[14px]">error</span>
-            <span>PIN incorrecto. Inténtalo de nuevo.</span>
+            <span>Clave incorrecta. Inténtalo de nuevo.</span>
           </p>
         </div>
 
