@@ -286,19 +286,6 @@ body {
     border-color: var(--text-main);
     box-shadow: 0 0 0 4px var(--accent-light);
 }
-
-.lang-btn {
-    background: var(--btn-bg);
-    color: var(--text-muted);
-    transition: background 0.2s, color 0.2s;
-}
-.lang-btn:hover {
-    background: var(--btn-hover);
-    color: var(--text-main);
-}
-.lang-btn.active {
-    background: var(--accent-light);
-    color: var(--accent);
 }
 
 /* =========================================================

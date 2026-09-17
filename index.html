@@ -410,17 +410,8 @@
         <button type="button" onclick="closeSettings()" class="material-symbols-outlined text-muted/60 hover:text-main transition-colors">close</button>
       </div>
 
-      <!-- IDIOMA -->
-      <div class="flex flex-col gap-2">
-        <span class="font-label-caps text-[11px] text-muted tracking-widest font-bold" data-i18n="settings_language_title">IDIOMA</span>
-        <div class="flex gap-2">
-          <button type="button" class="lang-btn active flex-1 py-2 rounded-lg font-label-caps text-[11px] transition-colors" data-lang="es" onclick="applyLanguage('es')">Español</button>
-          <button type="button" class="lang-btn flex-1 py-2 rounded-lg font-label-caps text-[11px] transition-colors" data-lang="en" onclick="applyLanguage('en')">English</button>
-        </div>
-      </div>
-
       <!-- TEMA -->
-      <div class="flex flex-col gap-2 border-t border-theme pt-4">
+      <div class="flex flex-col gap-2">
         <span class="font-label-caps text-[11px] text-muted tracking-widest font-bold" data-i18n="settings_theme_title">TEMA</span>
         <div class="flex gap-3">
           <button type="button" class="theme-btn selected flex-1 py-2.5 sm:py-3 rounded-xl border-2 font-label-caps text-[11px] sm:text-[12px] font-bold transition-all" data-theme-val="dark" onclick="selectTheme('dark')" data-i18n="settings_theme_dark">Oscuro</button>
@@ -766,32 +757,12 @@
     function t(key) {
       const dict = I18N[currentLang] || I18N.es;
       return dict[key] !== undefined ? dict[key] : (I18N.es[key] !== undefined ? I18N.es[key] : key);
-    }
-
-    function applyLanguage(lang) {
-      currentLang = I18N[lang] ? lang : 'es';
-      localStorage.setItem('ui_lang', currentLang);
-      document.documentElement.lang = currentLang;
-
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        el.innerHTML = t(el.getAttribute('data-i18n'));
-      });
-      document.querySelectorAll('[data-i18n-title]').forEach(el => {
-        el.setAttribute('title', t(el.getAttribute('data-i18n-title')));
-      });
-      document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.lang === currentLang);
-      });
-    }
-
     // Inicializar preferencias guardadas
     (function initTheme() {
       const theme = localStorage.getItem('ui_theme') || 'dark';
       const color = localStorage.getItem('ui_color') || 'orange';
-      const lang = localStorage.getItem('ui_lang') || 'es';
       selectTheme(theme);
       selectColor(color);
-      applyLanguage(lang);
       showView('dashboard');
     })();
   </script>
