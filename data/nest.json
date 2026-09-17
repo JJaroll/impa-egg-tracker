@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-17T20:43:00.000Z",
+  "updatedAt": "2026-09-17T23:30:05.587Z",
   "species": "Nymphicus hollandicus",
   "mother": "Impa",
   "adminPinHash": "4597da85b54b0215a8b5d536291aab6f1fb48952dd97698ee26a2fab58b8cdec",
@@ -8,7 +8,7 @@
       "id": "egg_1_impa",
       "number": 1,
       "name": "Huevo #1 de Impa",
-      "layDate": "2026-09-17T16:32:00-03:00",
+      "layDate": "2026-09-17T13:32:00.000Z",
       "status": "pending",
       "notes": "Primer huevo de la nidada de Impa. Puesta detectada el 17 de septiembre a las 16:32 aprox. Incubación estándar de 21 días."
     }
