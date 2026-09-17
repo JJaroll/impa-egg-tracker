@@ -64,8 +64,38 @@ body {
 .nav-item-inactive {
     color: rgba(26, 27, 32, 0.45) !important;
 }
+[data-theme="dark"] .nav-item-inactive {
+    color: rgba(255, 255, 255, 0.45) !important;
+}
 .nav-item:hover {
     background: rgba(0, 0, 0, 0.05);
+}
+
+/* Navegación Móvil (Bottom Navigation Bar) */
+.nav-item-mobile {
+    color: rgba(26, 27, 32, 0.55);
+    transition: all 0.2s ease;
+}
+[data-theme="dark"] .nav-item-mobile {
+    color: rgba(255, 255, 255, 0.55);
+}
+.nav-item-mobile.nav-item-active {
+    background: var(--accent-light) !important;
+    color: var(--accent) !important;
+}
+.nav-item-mobile.nav-item-inactive {
+    color: rgba(26, 27, 32, 0.5) !important;
+}
+[data-theme="dark"] .nav-item-mobile.nav-item-inactive {
+    color: rgba(255, 255, 255, 0.45) !important;
+}
+.nav-item-mobile:active {
+    transform: scale(0.92);
+}
+
+/* Soporte para barra inferior de gestos en iOS (Safe Area) */
+.safe-bottom {
+    padding-bottom: calc(0.375rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* =========================================================
@@ -398,4 +428,46 @@ input[type=range].ui-range::-webkit-slider-thumb {
     transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN (Media Queries)
+   ========================================================= */
+@media screen and (max-width: 768px) {
+    /* Evitar zoom forzado indeseado al tocar campos en iOS Safari */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+
+    /* Adaptación del visor de huevo en pantallas móviles */
+    .svg-stage-canvas {
+        max-width: 240px;
+        height: 280px;
+    }
+
+    .visualizer-wrapper {
+        min-height: 330px;
+        padding: 0.75rem;
+    }
+
+    /* Posición del Toast por encima de la barra de navegación móvil */
+    .toast-alert {
+        left: 16px;
+        right: 16px;
+        bottom: 74px;
+        max-width: calc(100vw - 32px);
+    }
+}
+
+@media screen and (max-width: 380px) {
+    /* Ajustes para smartphones ultra compactos (< 380px) */
+    .svg-stage-canvas {
+        max-width: 210px;
+        height: 250px;
+    }
+
+    .visualizer-wrapper {
+        min-height: 300px;
+        padding: 0.5rem;
+    }
 }

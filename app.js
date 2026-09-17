@@ -227,42 +227,41 @@ class EggTrackerApp {
       if (!this.isAdmin) {
         // VISTA VISITANTE (MODO LECTURA)
         headerContainer.innerHTML = `
-          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-xs font-label-caps text-blue-300">
-            <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+          <div class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-[10px] sm:text-xs font-label-caps text-blue-300 shrink-0">
+            <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-400 animate-pulse"></span>
             <span class="hidden sm:inline">MODO LECTURA</span>
             <span class="sm:hidden">LECTURA</span>
           </div>
-          <button type="button" onclick="app.openAdminLoginModal()" class="btn-secondary px-2.5 py-1.5 rounded-xl text-xs font-label-caps flex items-center gap-1.5 text-amber-400 border-amber-500/30 hover:border-amber-400 hover:bg-amber-500/10 transition-all shadow-sm" title="Acceso Dueño de Impa (Desbloquear edición)">
-            <span class="material-symbols-outlined text-[16px]">lock</span>
+          <button type="button" onclick="app.openAdminLoginModal()" class="btn-secondary px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-label-caps flex items-center gap-1 text-amber-400 border-amber-500/30 hover:border-amber-400 hover:bg-amber-500/10 transition-all shadow-sm shrink-0" title="Acceso Dueño de Impa (Desbloquear edición)">
+            <span class="material-symbols-outlined text-[15px] sm:text-[16px]">lock</span>
             <span class="hidden sm:inline">ACCESO DUEÑO</span>
           </button>
         `;
       } else {
         // VISTA ADMINISTRADOR (DUEÑO DE IMPA)
         headerContainer.innerHTML = `
-          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-xs font-label-caps text-amber-300 font-bold">
+          <div class="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-[10px] sm:text-xs font-label-caps text-amber-300 font-bold shrink-0">
             <span>👑</span>
-            <span class="hidden sm:inline">DUEÑO DE IMPA</span>
-            <span class="sm:hidden">DUEÑO</span>
+            <span class="hidden md:inline">DUEÑO DE IMPA</span>
           </div>
-          <button type="button" onclick="app.openAddEggModal()" class="btn-primary px-3 sm:px-4 py-2 rounded-xl text-xs font-label-caps tracking-wider flex items-center gap-1.5 shadow-md">
-            <span class="material-symbols-outlined text-[16px]">add</span>
+          <button type="button" onclick="app.openAddEggModal()" class="btn-primary px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-label-caps tracking-wider flex items-center gap-1 shadow-md shrink-0">
+            <span class="material-symbols-outlined text-[15px] sm:text-[16px]">add</span>
             <span class="hidden sm:inline">REGISTRAR HUEVO</span>
             <span class="sm:hidden">HUEVO</span>
           </button>
-          <button type="button" onclick="app.openPublishModal()" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 text-emerald-400 border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-500/10 transition-all" title="Publicar nest.json para visitantes en GitHub Pages">
-            <span class="material-symbols-outlined text-[16px]">cloud_upload</span>
-            <span class="hidden md:inline">PUBLICAR</span>
+          <button type="button" onclick="app.openPublishModal()" class="btn-secondary px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-label-caps flex items-center gap-1 text-emerald-400 border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-500/10 transition-all shrink-0" title="Publicar nest.json para visitantes en GitHub Pages">
+            <span class="material-symbols-outlined text-[15px] sm:text-[16px]">cloud_upload</span>
+            <span class="hidden lg:inline">PUBLICAR</span>
           </button>
-          <button type="button" onclick="app.exportBackup()" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1" title="Respaldar datos JSON">
-            <span class="material-symbols-outlined text-[16px]">download</span>
+          <button type="button" onclick="app.exportBackup()" class="btn-secondary px-2 py-1.5 sm:py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 shrink-0" title="Respaldar datos JSON">
+            <span class="material-symbols-outlined text-[15px] sm:text-[16px]">download</span>
           </button>
-          <label for="input-import-backup" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 cursor-pointer" title="Restaurar datos JSON">
-            <span class="material-symbols-outlined text-[16px]">upload</span>
+          <label for="input-import-backup" class="btn-secondary px-2 py-1.5 sm:py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 cursor-pointer shrink-0" title="Restaurar datos JSON">
+            <span class="material-symbols-outlined text-[15px] sm:text-[16px]">upload</span>
           </label>
           <input type="file" id="input-import-backup" accept=".json" class="hidden">
-          <button type="button" onclick="app.logoutAdmin()" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 text-red-400 border-red-500/30 hover:border-red-400 hover:bg-red-500/10 transition-all" title="Cerrar sesión de administrador">
-            <span class="material-symbols-outlined text-[16px]">lock_open</span>
+          <button type="button" onclick="app.logoutAdmin()" class="btn-secondary px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 text-red-400 border-red-500/30 hover:border-red-400 hover:bg-red-500/10 transition-all shrink-0" title="Cerrar sesión de administrador">
+            <span class="material-symbols-outlined text-[15px] sm:text-[16px]">lock_open</span>
             <span class="hidden sm:inline">BLOQUEAR</span>
           </button>
         `;
@@ -565,21 +564,21 @@ class EggTrackerApp {
         : `¡Periodo cumplido! (${this.formatDate(m.hatchDate)})`;
 
       return `
-        <div class="glass-card p-4 sm:p-5 flex flex-col gap-4 border-theme hover:border-accent/40 transition-all relative group" id="card-${egg.id}">
+        <div class="glass-card p-3.5 sm:p-5 flex flex-col gap-3.5 sm:gap-4 border-theme hover:border-accent/40 transition-all relative group" id="card-${egg.id}">
           
           <!-- Encabezado de la Tarjeta -->
           <div class="flex items-start justify-between gap-2">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center text-accent font-display font-bold text-base shrink-0">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-accent/15 flex items-center justify-center text-accent font-display font-bold text-sm sm:text-base shrink-0">
                 #${egg.number || 1}
               </div>
-              <div>
-                <h3 class="font-display font-bold text-base text-main leading-tight">${this.escapeHtml(egg.name)}</h3>
-                <p class="text-xs text-muted font-label-caps mt-0.5">Puesta: ${this.formatDate(new Date(egg.layDate))}</p>
+              <div class="min-w-0">
+                <h3 class="font-display font-bold text-sm sm:text-base text-main leading-tight truncate">${this.escapeHtml(egg.name)}</h3>
+                <p class="text-[11px] sm:text-xs text-muted font-label-caps mt-0.5">Puesta: ${this.formatDate(new Date(egg.layDate))}</p>
               </div>
             </div>
 
-            <span class="px-2.5 py-1 rounded-md text-[10px] font-label-caps font-bold border ${badge.class} shrink-0">
+            <span class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[9px] sm:text-[10px] font-label-caps font-bold border ${badge.class} shrink-0 text-right">
               ${badge.label}
             </span>
           </div>
@@ -598,47 +597,49 @@ class EggTrackerApp {
           <!-- Hitos Clave -->
           <div class="flex flex-col gap-1.5 text-xs font-label-caps">
             <div class="flex items-center justify-between p-2 rounded-lg bg-input/30 border border-theme">
-              <span class="text-muted flex items-center gap-1">
+              <span class="text-muted flex items-center gap-1 shrink-0">
                 <span class="material-symbols-outlined text-[16px] text-amber-400">flashlight_on</span>
-                <span>Ovoscopia (Día 5):</span>
+                <span class="hidden xs:inline">Ovoscopia (Día 5):</span>
+                <span class="xs:hidden">Día 5:</span>
               </span>
-              <span class="font-data font-bold text-main" data-candling-for="${egg.id}">${candlingTimeLabel}</span>
+              <span class="font-data font-bold text-main text-right text-[11px] sm:text-xs" data-candling-for="${egg.id}">${candlingTimeLabel}</span>
             </div>
 
             <div class="flex items-center justify-between p-2 rounded-lg bg-input/30 border border-theme">
-              <span class="text-muted flex items-center gap-1">
+              <span class="text-muted flex items-center gap-1 shrink-0">
                 <span class="material-symbols-outlined text-[16px] text-emerald-400">pest_control_rodent</span>
-                <span>Eclosión (Día 21):</span>
+                <span class="hidden xs:inline">Eclosión (Día 21):</span>
+                <span class="xs:hidden">Día 21:</span>
               </span>
-              <span class="font-data font-bold text-main" data-hatch-for="${egg.id}">${hatchTimeLabel}</span>
+              <span class="font-data font-bold text-main text-right text-[11px] sm:text-xs" data-hatch-for="${egg.id}">${hatchTimeLabel}</span>
             </div>
           </div>
 
           ${egg.notes ? `<p class="text-xs text-muted/80 italic px-1 font-body">"${this.escapeHtml(egg.notes)}"</p>` : ''}
 
           <!-- Acciones de la Tarjeta (Diferenciadas por Rol) -->
-          <div class="flex items-center gap-2 pt-2 border-t border-theme">
+          <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 pt-2 border-t border-theme">
             <!-- Botón de desarrollo (abierto a todos) -->
-            <button class="btn-primary flex-1 py-2 px-3 rounded-xl text-xs font-label-caps tracking-wider flex items-center justify-center gap-1 shadow-sm" onclick="app.openVisualizerForEgg('${egg.id}')">
+            <button class="btn-primary flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps tracking-wider flex items-center justify-center gap-1 shadow-sm min-w-[110px]" onclick="app.openVisualizerForEgg('${egg.id}')">
               <span class="material-symbols-outlined text-[16px]">biotech</span>
               <span>VER DÍA ${m.currentDay}</span>
             </button>
 
             <!-- Botón de descarga de recordatorio individual (abierto a todos) -->
-            <button class="btn-secondary py-2 px-3 rounded-xl text-xs font-label-caps flex items-center gap-1 text-accent border-accent/30 hover:border-accent hover:bg-accent/10" onclick="app.downloadIcsForEgg('${egg.id}')" title="Descargar recordatorios a tu calendario (.ics)">
+            <button class="btn-secondary py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps flex items-center justify-center gap-1 text-accent border-accent/30 hover:border-accent hover:bg-accent/10 shrink-0" onclick="app.downloadIcsForEgg('${egg.id}')" title="Descargar recordatorios a tu calendario (.ics)">
               <span class="material-symbols-outlined text-[16px]">calendar_add_on</span>
               <span class="hidden sm:inline">RECORDATORIO</span>
             </button>
 
             ${this.isAdmin ? `
               <!-- Acciones exclusivas del Administrador -->
-              <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps text-amber-400 hover:bg-amber-500/10" onclick="app.openChangeStatusModal('${egg.id}')" title="Cambiar estado de fertilidad">
+              <button class="btn-secondary py-2 px-2 sm:px-2.5 rounded-xl text-xs font-label-caps text-amber-400 hover:bg-amber-500/10" onclick="app.openChangeStatusModal('${egg.id}')" title="Cambiar estado de fertilidad">
                 <span class="material-symbols-outlined text-[16px]">tune</span>
               </button>
-              <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps" onclick="app.openEditEggModal('${egg.id}')" title="Editar huevo">
+              <button class="btn-secondary py-2 px-2 sm:px-2.5 rounded-xl text-xs font-label-caps" onclick="app.openEditEggModal('${egg.id}')" title="Editar huevo">
                 <span class="material-symbols-outlined text-[16px]">edit</span>
               </button>
-              <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps text-red-400 hover:bg-red-500/10 hover:border-red-500/40" onclick="app.deleteEgg('${egg.id}')" title="Eliminar huevo">
+              <button class="btn-secondary py-2 px-2 sm:px-2.5 rounded-xl text-xs font-label-caps text-red-400 hover:bg-red-500/10 hover:border-red-500/40" onclick="app.deleteEgg('${egg.id}')" title="Eliminar huevo">
                 <span class="material-symbols-outlined text-[16px]">delete</span>
               </button>
             ` : ''}
