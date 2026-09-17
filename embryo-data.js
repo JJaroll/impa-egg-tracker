@@ -1,0 +1,287 @@
+/**
+ * Base de datos biológica del desarrollo embrionario de la Ninfa / Carolina (Nymphicus hollandicus)
+ * Periodo estándar de incubación: 21 días (rango habitual 19-21 días).
+ */
+
+const EMBRYO_STAGES = [
+  {
+    day: 0,
+    title: "Puesta del Huevo (Ovipolución)",
+    shortDesc: "El huevo acaba de ser depositado en el nido.",
+    detailedDesc: "El huevo es recién puesto por la ninfa. La cáscara es porosa y de color blanco mate o rosado suave. En el interior se encuentra el disco germinal (blastodermo) sobre la yema amarilla. Los padres pueden demorar de 1 a 3 días en iniciar la incubación constante (suelen empezar con firmeza tras el 2º o 3º huevo).",
+    candlingDesc: "Al trasluz (ovoscopia) el huevo se ve completamente translúcido, brillante y uniforme, con una ligera sombra difusa correspondiente a la yema que flota lentamente al girarlo. No hay vasos sanguíneos.",
+    airCell: "Muy pequeña o casi imperceptible (< 2 mm) en el extremo romo.",
+    chickAnatomy: "Disco blastodérmico microscópico. División celular inicial antes del enfriamiento o inicio de calor sostenido.",
+    milestone: "Puesta",
+    temperatureTip: "Si la madre aún no calienta con regularidad, es normal: la puesta se realiza en intervalos de aprox. 48 horas.",
+    statusRecommended: "pending"
+  },
+  {
+    day: 1,
+    title: "Inicio de la Incubación Activa",
+    shortDesc: "Diferenciación de las capas celulares embrionarias.",
+    detailedDesc: "Con el calor corporal constante de los padres (~37.5 °C en la placa de incubación), el blastodermo se reactiva. Se forman las tres capas germinativas (ectodermo, mesodermo y endodermo). Empieza a dibujarse la línea primitiva.",
+    candlingDesc: "Aspecto idéntico al día 0. Huevo claro y translúcido. No intentar manipular el huevo aún para evitar estrés y enfriamiento innecesario.",
+    airCell: "Pequeña (~2-3 mm) en el extremo romo.",
+    chickAnatomy: "Placa neural y primeros somitas embrionarios.",
+    milestone: null,
+    temperatureTip: "Temperatura ideal de contacto: 37.2 °C - 37.5 °C.",
+    statusRecommended: "pending"
+  },
+  {
+    day: 2,
+    title: "Aparición de Islotes Sanguíneos",
+    shortDesc: "Comienza a formarse el sistema vascular primitivo.",
+    detailedDesc: "En el área vitelina periférica se forman los primeros islotes sanguíneos. Comienza a esbozarse el tubo cardíaco primitivo. Las membranas extraembrionarias (amnios y corion) inician su expansión.",
+    candlingDesc: "El huevo sigue viéndose mayormente claro al trasluz, aunque un ojo muy experto podría notar un leve oscurecimiento focal en el centro de la yema.",
+    airCell: "3 mm. El aire penetra por los poros de la cáscara reemplazando el vapor evaporado.",
+    chickAnatomy: "Pliegues neurales en cierre; tubo cardíaco tubular simple.",
+    milestone: null,
+    temperatureTip: "Los padres giran el huevo decenas de veces al día para evitar que el blastodermo se adhiera a la cáscara.",
+    statusRecommended: "pending"
+  },
+  {
+    day: 3,
+    title: "Primeros Latidos Cardíacos",
+    shortDesc: "El corazón del embrión comienza a pulsar rítmicamente.",
+    detailedDesc: "El corazón embrionario comienza sus primeras contracciones rítmicas. Se establece la circulación vitelina. El embrión se dobla sobre su costado izquierdo.",
+    candlingDesc: "En cuartos oscuros con linterna LED fría de alta potencia, puede apreciarse un punto rosado diminuto con tenues filamentos rojos incipientes.",
+    airCell: "3-4 mm en el polo ancho.",
+    chickAnatomy: "Corazón bicameral primitivo funcionando. Vesículas encefálicas diferenciadas.",
+    milestone: "Primer latido",
+    temperatureTip: "No alterar el nido de los padres.",
+    statusRecommended: "pending"
+  },
+  {
+    day: 4,
+    title: "Expansión de la Red Capilar",
+    shortDesc: "Aparece la clásica 'arañita' de vasos sanguíneos.",
+    detailedDesc: "La red de vasos sanguíneos vitelinos se ramifica visiblemente sobre la yema. Empiezan a desarrollarse las copas ópticas (futuros ojos) y el alantoides, membrana que gestionará los desechos metabólicos y la respiración.",
+    candlingDesc: "Se observa un punto central rojizo móvil con finas líneas capilares que irradian como patas de araña. Es el prólogo de la confirmación.",
+    airCell: "4 mm.",
+    chickAnatomy: "Arcos branquiales visibles al microscopio, vesícula óptica en formación.",
+    milestone: null,
+    temperatureTip: "Prepara una linterna ovoscopio o linterna de celular con cono de cartulina para el miraje de mañana.",
+    statusRecommended: "pending"
+  },
+  {
+    day: 5,
+    title: "¡Día Clave! Confirmación de Fertilidad (Ovoscopia)",
+    shortDesc: "Los vasos sanguíneos y el embrión son 100% distinguibles al trasluz.",
+    detailedDesc: "¡Hito fundamental! En este día es seguro determinar si el huevo es fértil sin dudas. El embrión de ninfa es visible como una pequeña coma roja oscura que late, rodeada por una red viva de vasos sanguíneos que cubren casi un tercio de la yema.",
+    candlingDesc: "¡Efecto 'Araña de Sangre'! Al colocar la linterna en el polo romo en una habitación a oscuras, se aprecia claramente una red vascular roja brillante y el punto embrionario que puede mostrar leves movimientos.",
+    airCell: "4-5 mm en el polo romo.",
+    chickAnatomy: "Esbozos de extremidades anteriores (alas) y posteriores (patas). Cabeza desproporcionadamente grande.",
+    milestone: "¡Miraje / Confirmación de Fertilidad!",
+    temperatureTip: "Realizar el miraje en menos de 1 minuto para no enfriar el huevo. Lavarse bien las manos previamente.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 6,
+    title: "Pigmentación Ocular y Movimiento",
+    shortDesc: "El ojo del polluelo comienza a pigmentarse de negro.",
+    detailedDesc: "La retina comienza a sintetizar melanina. El ojo se vuelve el rasgo más visible del embrión. El amnios se llena de líquido amniótico, protegiendo al embrión de golpes mecánicos.",
+    candlingDesc: "El punto oscuro embrionario se hace más nítido. Se puede distinguir un punto negro correspondiente al ojo. La red de vasos sanguíneos es más gruesa y ramificada.",
+    airCell: "5 mm.",
+    chickAnatomy: "Diferenciación de húmero y fémur en los muñones de las extremidades.",
+    milestone: null,
+    temperatureTip: "Humedad ambiente recomendada del nido: 55% a 60%.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 7,
+    title: "Esbozo del Pico y Curvatura Corporal",
+    shortDesc: "El embrión adopta una clara forma de 'C'.",
+    detailedDesc: "Aparece la cresta o protuberancia maxilar (futuro pico curvado de psitácida). La cola y el tronco se alargan. El alantoides contacta con el corion para formar la membrana corioalantoidea, encargada del intercambio de O2 y CO2 a través de la cáscara.",
+    candlingDesc: "Los vasos sanguíneos cubren ya la mitad de la superficie interna del huevo. El embrión se mueve de forma espontánea dentro del líquido amniótico.",
+    airCell: "5-6 mm.",
+    chickAnatomy: "Esbozo del pico superior e inferior. Dedos de las patas comenzando a separarse (zigodáctilos en psitácidas).",
+    milestone: null,
+    temperatureTip: "La alimentación de la madre debe incluir buen aporte de calcio (hueso de jibia, bloque mineral) y mixtura variada con germinados.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 8,
+    title: "Desarrollo del Pico y 'Diente de Huevo'",
+    shortDesc: "Formación del diamante o diente de eclosión.",
+    detailedDesc: "En el extremo superior del pico en desarrollo se forma una pequeña calcificación dura llamada 'diamante' o 'diente de huevo' (egg tooth), herramienta que usará el polluelo el día 21 para romper la cáscara.",
+    candlingDesc: "El área oscura se expande notablemente. Vasos principales muy marcados. La silueta del embrión ya tiene volumen reconocible.",
+    airCell: "6 mm.",
+    chickAnatomy: "Comienza la osificación de los primeros huesos craneales y vértebras.",
+    milestone: null,
+    temperatureTip: "Mantener la tranquilidad en el entorno de la jaula; evitar ruidos estridentes.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 9,
+    title: "Diferenciación de Órganos Internos",
+    shortDesc: "El hígado, molleja y pulmones continúan madurando.",
+    detailedDesc: "El sistema digestivo y respiratorio se organizan. La cavidad abdominal se va cerrando gradualmente sobre el saco vitelino. El embrión flota libremente en la bolsa amniótica.",
+    candlingDesc: "Más de la mitad del huevo presenta una tonalidad rojiza densa con vasos definidos. El embrión es muy activo al percibir el calor de la luz.",
+    airCell: "6-7 mm.",
+    chickAnatomy: "Dedos de las patas completamente diferenciados (dos hacia adelante y dos hacia atrás característicos de las ninfas).",
+    milestone: null,
+    temperatureTip: "No manipular el huevo si no es indispensable; a partir de aquí el desarrollo es muy dinámico.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 10,
+    title: "Mitad de la Incubación: Folículos de Plumón",
+    shortDesc: "Aparecen las primeras líneas de folículos de plumas.",
+    detailedDesc: "Estamos a medio camino. En la piel transparente del embrión surgen hileras de pequeñas papilas que darán origen a las primeras plumas de plumón amarillo sedoso con las que nacen los pichones de ninfa.",
+    candlingDesc: "El huevo se vuelve progresivamente más opaco. La yema es absorbida poco a poco mientras el embrión gana masa.",
+    airCell: "7 mm. Ocupa aproximadamente el 15% del volumen del huevo.",
+    chickAnatomy: "Conductos auditivos abiertos exteriormente; párpados casi cierran el ojo.",
+    milestone: "Ecuador de incubación (10 días)",
+    temperatureTip: "Comprobar que la hembra y el macho se turnan para incubar (común en Nymphicus hollandicus: el macho suele incubar de día y la hembra de noche).",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 11,
+    title: "Crecimiento Rápido de Extremidades",
+    shortDesc: "Alas y patas con articulaciones definidas.",
+    detailedDesc: "Las garras de los dedos empiezan a endurecerse. El pico adquiere su curvatura psitácida típica. El alantoides abraza casi por completo el saco vitelino.",
+    candlingDesc: "La luz revela una masa corporal compacta y oscura. Los vasos sanguíneos periféricos son gruesos y pulsan con vigor.",
+    airCell: "7-8 mm.",
+    chickAnatomy: "Plumón incipiente visible como pequeños brotes en la espalda y alas.",
+    milestone: null,
+    temperatureTip: "Monitorea la temperatura ambiente de la habitación.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 12,
+    title: "Aparición de Uñas y Cresta Primaria",
+    shortDesc: "Primer esbozo de las características plumas de la cresta.",
+    detailedDesc: "La ninfa es famosa por su cresta eréctil; los folículos cefálicos comienzan a diferenciarse. El esqueleto cartilaginoso se va mineralizando con el calcio extraído de la cáscara del huevo (lo que además debilita la cáscara para facilitar el nacimiento).",
+    candlingDesc: "El embrión ocupa casi dos tercios del espacio interno. Los movimientos son más espaciados debido al menor espacio disponible.",
+    airCell: "8 mm.",
+    chickAnatomy: "Párpados completamente sellados para proteger la retina en desarrollo.",
+    milestone: null,
+    temperatureTip: "La cáscara se vuelve un poco más delgada por absorción de calcio, normal en esta etapa.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 13,
+    title: "Maduración del Plumón Embrionario",
+    shortDesc: "El cuerpo se cubre de fino plumón protector.",
+    detailedDesc: "El plumón amarillo primario se elonga dentro de sus vainas protectoras. El tracto digestivo comienza a procesar pequeñas cantidades de líquido amniótico que el pichón traga.",
+    candlingDesc: "Dos tercios del huevo están completamente oscuros. Solo el tercio inferior y la cámara de aire dejan pasar la luz.",
+    airCell: "8-9 mm.",
+    chickAnatomy: "Cresta cefálica con folículos notorios. Pico bien constituido.",
+    milestone: null,
+    temperatureTip: "Mantener agua fresca para que los padres puedan bañarse y regular la humedad del nido con sus plumas mojadas.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 14,
+    title: "Reducción del Espacio y Posición Fetal",
+    shortDesc: "El polluelo adopta la posición de acurrucado.",
+    detailedDesc: "El espacio libre dentro del huevo es escaso. El polluelo flexiona el cuello y ubica su cabeza bajo el ala derecha, orientándose hacia la cámara de aire situada en el polo romo.",
+    candlingDesc: "El interior se ve casi negro / opaco en un 70%. Se aprecian grandes vasos sanguíneos cruzando el borde con la cámara de aire.",
+    airCell: "9 mm. Línea nítida delimitando la cámara de aire.",
+    chickAnatomy: "Órganos internos completamente encapsulados en la cavidad celómica.",
+    milestone: null,
+    temperatureTip: "Faltan solo 7 días para la eclosión.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 15,
+    title: "Consumo Acelerado de la Yema",
+    shortDesc: "El saco vitelino comienza a prepararse para su reabsorción.",
+    detailedDesc: "La yema, fuente vital de anticuerpos y nutrientes de la madre, comienza a replegarse hacia el abdomen a través del ombligo. Proporcionará energía para el extenuante proceso de rotura de la cáscara.",
+    candlingDesc: "80% del huevo es opaco. Al colocar la linterna en el polo romo se ve con claridad el límite inclinado de la cámara de aire.",
+    airCell: "9-10 mm.",
+    chickAnatomy: "Sistema inmunitario materno transferido a través del vitelo.",
+    milestone: null,
+    temperatureTip: "La hembra pasa periodos más largos sin salir del nido.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 16,
+    title: "Orientación hacia el Polo Romo",
+    shortDesc: "La cabeza se coloca estratégicamente apuntando al aire.",
+    detailedDesc: "El feto realiza sus últimos giros de posición. La punta del pico con su diamante queda colocada a escasos milímetros de la membrana interna de la cámara de aire.",
+    candlingDesc: "Casi todo el huevo es una masa oscura sólida con solo la cámara de aire clara. En los bordes se observan sombras de movimientos respiratorios musculares.",
+    airCell: "10 mm. La línea de la cámara de aire a menudo adopta una forma ovalada o inclinada.",
+    chickAnatomy: "Músculo de eclosión (musculus complexus) en la nuca aumentado de tamaño.",
+    milestone: null,
+    temperatureTip: "No rotar bruscamente el huevo en caso de inspección.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 17,
+    title: "Líquido Amniótico Casi Consumido",
+    shortDesc: "Preparación fisiológica para la transición aérea.",
+    detailedDesc: "El líquido amniótico casi ha desaparecido. El embrión llena todo el espacio disponible. Los riñones y el hígado están en pleno funcionamiento. La pared de la cámara de aire se deshidrata preparándose para el picaje.",
+    candlingDesc: "Opacidad casi absoluta (90%). La cámara de aire es amplia y translúcida.",
+    airCell: "11 mm. Ocupa aprox. el 20-25% del volumen del huevo.",
+    chickAnatomy: "Plumaje primario completo en vainas amarillas. Garras afiladas.",
+    milestone: "Víspera del picaje interno",
+    temperatureTip: "Asegurar que la humedad del nido se eleve a 65% para que las membranas no se sequen ni se vuelvan duras como cuero.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 18,
+    title: "Picaje Interno (Internal Pip)",
+    shortDesc: "El polluelo rompe la membrana de aire y respira por primera vez.",
+    detailedDesc: "¡Momento emocionante! Con el diamante de su pico, el polluelo perfora la membrana interna de la cámara de aire. Comienza a ventilar sus pulmones con el oxígeno de la cámara. Al arrimar el huevo al oído, se pueden escuchar tenues píos o golpes rítmicos dentro.",
+    candlingDesc: "En la cámara de aire se aprecia la silueta del pico asomándose (como una sombra triangular dentro del espacio claro).",
+    airCell: "Límite irregular; el pico penetra el espacio de aire.",
+    chickAnatomy: "Pulmones activados; respiración aérea en marcha. Comienza la absorción del saco vitelino en el abdomen.",
+    milestone: "¡Picaje Interno! (Respiración pulmonar)",
+    temperatureTip: "¡Subir la humedad al 65%-70%! Poner bañera de agua tibia a los padres si están en jaula para que humedezcan el nido.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 19,
+    title: "Picaje Externo (External Pip)",
+    shortDesc: "Aparece la primera grieta en la cáscara del huevo.",
+    detailedDesc: "El polluelo agota el oxígeno de la cámara de aire y empuja con fuerza contra la cáscara exterior, produciendo una pequeña fractura en forma de estrella (pip externo). Ahora respira aire directo del exterior del nido. Los píos son audibles con facilidad.",
+    candlingDesc: "Se aprecia la fractura exterior con pequeños fragmentos de cáscara levantados. No intervenir: el polluelo necesita entre 24 y 48 horas para terminar de absorber la yema y la sangre de las membranas.",
+    airCell: "Perforada hacia el exterior.",
+    chickAnatomy: "Absorción activa del resto del saco vitelino a través del cordón umbilical.",
+    milestone: "¡Picaje Externo! (Grieta en cáscara)",
+    temperatureTip: "¡NUNCA retirar la cáscara a la fuerza! Los vasos sanguíneos de las membranas aún tienen sangre activa; pelar el huevo antes de tiempo causa hemorragias fatales.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 20,
+    title: "Rotación y Corte Circular de la Cáscara",
+    shortDesc: "El polluelo gira sobre sí mismo abriendo la 'tapa'.",
+    detailedDesc: "El pichón descansa entre esfuerzos. Cuando recobra energía, empuja con las patas y gira contra las agujas del reloj, usando el pico para cortar la cáscara en un círculo alrededor del polo romo (proceso llamado 'zipping'). Todo el saco vitelino ha sido retraído al abdomen y el ombligo se sella.",
+    candlingDesc: "Línea continua de fractura circular en el polo ancho del huevo.",
+    airCell: "Completamente abierta.",
+    chickAnatomy: "Cierre umbilical completo. Músculo complexus de la nuca al máximo esfuerzo.",
+    milestone: "Rotación de eclosión (Zipping)",
+    temperatureTip: "Mantener humedad alta (65-75%). Si la membrana interna se torna marrón oscura o seca, se puede colocar una microgota de agua tibia con hisopo sobre la fractura sin tapar el orificio de respiración.",
+    statusRecommended: "fertile"
+  },
+  {
+    day: 21,
+    title: "¡Día de Eclosión! (Nacimiento de la Ninfa)",
+    shortDesc: "El polluelo empuja la tapa de la cáscara y nace libre.",
+    detailedDesc: "¡Bienvenido al mundo! Con un empujón final de sus patas y cabeza, la tapa del huevo cede. Nace un polluelo de ninfa húmedo, con plumón amarillo brillante pegado al cuerpo, ojos cerrados y cuello largo. En pocas horas, con el calor de los padres, el plumón se secará esponjándose.",
+    candlingDesc: "¡Huevo vacío y polluelo nacido! Cáscara partida en dos mitades limpias.",
+    airCell: "N/A (Cáscara abierta)",
+    chickAnatomy: "Pichón nidícola dependiente de sus padres. Peso al nacer: entre 3.5 y 4.5 gramos. El diamante del pico se caerá en unos días.",
+    milestone: "¡¡ECLOSIÓN!! 🐣🎉",
+    temperatureTip: "Los padres alimentarán al polluelo con 'leche de buche' y semillas predigeridas unas horas tras el nacimiento. Mantener comida fresca y rica en nutrientes.",
+    statusRecommended: "hatched"
+  }
+];
+
+const SPECIES_INFO = {
+  scientificName: "Nymphicus hollandicus",
+  commonName: "Ninfa común / Carolina / Cacotillo / Cockatiel",
+  family: "Cacatuidae",
+  clutchSize: "4 a 6 huevos promedio (intervalos de puesta cada 48 horas)",
+  incubationDays: 21,
+  candlingDay: 5,
+  internalPipDay: 18,
+  externalPipDay: 19,
+  hatchDay: 21,
+  eggWeightAverage: "4.5 - 5.5 gramos",
+  idealIncubationTemp: "37.2 °C - 37.5 °C (si es artificial)",
+  idealHumidityNormal: "50% - 60%",
+  idealHumidityHatching: "65% - 75% (Días 18 al 21)"
+};

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Monitor de incubación y desarrollo embrionario de huevos para la ninfa Impa (Nymphicus hollandicus). Seguimiento individual, ovoscopia al día 5 y eclosión a los 21 días.">
+  <meta name="keywords" content="ninfa, carolina, Nymphicus hollandicus, incubación de huevos, ovoscopia, desarrollo embrionario, cacotillo">
+  <meta name="author" content="Impa Egg Tracker">
+  <title>Nido de Impa • Monitor de Incubación de Ninfas (Nymphicus hollandicus)</title>
+
+  <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>🥚</text></svg>">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Encabezado Principal / Hero -->
+    <header class="header-hero">
+      <div class="brand-wrapper">
+        <div class="brand-avatar">
+          <img src="assets/impa.jpg" alt="Ninfa Impa con su huevo" class="brand-avatar-img">
+        </div>
+        <div class="brand-titles">
+          <h1>Nido de Impa</h1>
+          <div>
+            <span class="species-tag">🪶 <em>Nymphicus hollandicus</em> (Ninfa / Carolina)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-add-egg" class="btn btn-primary" title="Registrar un nuevo huevo puesto">
+          <span>+</span> Registrar Huevo
+        </button>
+        <button id="btn-care-guide" class="btn btn-secondary" title="Ver guía de parámetros y cuidados del nido">
+          📖 Guía de Cuidados
+        </button>
+        <button id="btn-backup-data" class="btn btn-ghost" title="Descargar copia de seguridad de la nidada">
+          💾 Respaldar
+        </button>
+        <label for="input-import-backup" class="btn btn-ghost" style="cursor: pointer;" title="Restaurar copia de seguridad">
+          📥 Restaurar
+        </label>
+        <input type="file" id="input-import-backup" accept=".json" style="display: none;">
+      </div>
+    </header>
+
+    <!-- Resumen y Métricas de la Nidada -->
+    <section class="stats-strip" aria-label="Estadísticas de la nidada">
+      <div class="stat-card">
+        <div class="stat-icon total">🪺</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-total-eggs">0</div>
+          <div class="stat-label">Huevos en el nido</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon fertile">💓</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-fertile-eggs">0</div>
+          <div class="stat-label">Fértiles confirmados</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon candling">🔦</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-pending-eggs">0</div>
+          <div class="stat-label">Pendientes ovoscopia (Día 5)</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon hatch">🐣</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-hatched-eggs">0</div>
+          <div class="stat-label">Eclosionados</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Banner Inteligente: Predicción del Próximo Huevo -->
+    <section id="next-egg-banner" class="next-egg-banner" aria-label="Predicción del próximo huevo">
+      <div class="next-egg-content">
+        <div class="next-egg-badge">Próxima Puesta</div>
+        <div class="next-egg-text">
+          <h3 id="next-egg-title">Próximo huevo estimado: Huevo #2</h3>
+          <p id="next-egg-desc">Las ninfas suelen poner cada ~48 horas.</p>
+        </div>
+      </div>
+      <div class="next-egg-countdown" id="next-egg-timer">
+        Calculando tiempo...
+      </div>
+    </section>
+
+    <!-- Listado / Cuadrícula de Huevos Individuales -->
+    <main>
+      <div class="section-header">
+        <h2 class="section-title">🥚 Monitoreo Individual de Huevos</h2>
+      </div>
+
+      <div class="eggs-grid" id="eggs-grid">
+        <!-- Tarjetas dinámicas inyectadas por app.js -->
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Nido de Impa • Monitoreo de desarrollo de <em>Nymphicus hollandicus</em> • 21 días de incubación</p>
+      <p style="margin-top: 0.3rem;">Ovoscopia segura a partir del Día 5 • Almacenamiento 100% local en tu dispositivo</p>
+    </footer>
+
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: Visor Interactivo de Desarrollo Embrionario                     -->
+  <!-- ======================================================================= -->
+  <div class="modal-overlay" id="embryo-visualizer-modal" role="dialog" aria-modal="true" aria-labelledby="dev-modal-title">
+    <div class="modal-content" style="max-width: 960px;">
+      <button class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+      
+      <div class="modal-header">
+        <h2 id="dev-modal-title" style="font-family: var(--font-heading); font-size: 1.4rem;">
+          Desarrollo Embrionario del Polluelo
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">
+          Explora la evolución día por día del embrión de <em>Nymphicus hollandicus</em> (0 a 21 días).
+        </p>
+      </div>
+
+      <!-- Selector Deslizante de Días -->
+      <div class="stage-slider-container">
+        <div class="slider-labels">
+          <span>Día 0 (Puesta)</span>
+          <span class="highlight-day" id="slider-day-val">Día 5</span>
+          <span>Día 21 (Eclosión)</span>
+        </div>
+        <input type="range" id="dev-day-slider" class="day-slider" min="0" max="21" value="5" step="1">
+      </div>
+
+      <!-- Selector de Modo de Visualización -->
+      <div class="mode-toggle-group">
+        <button id="btn-mode-candling" class="mode-toggle-btn active">
+          🔦 Vista de Ovoscopia (Miraje con Linterna)
+        </button>
+        <button id="btn-mode-anatomy" class="mode-toggle-btn">
+          📐 Esquema Anatómico del Polluelo
+        </button>
+      </div>
+
+      <!-- Diseño a dos columnas: Ilustración Dinámica + Ficha Biológica -->
+      <div class="dev-modal-layout">
+        <!-- Columna Izquierda: Canvas / SVG dinámico -->
+        <div id="visualizer-canvas-container">
+          <!-- Renderizado dinámico por EmbryoVisualizer -->
+        </div>
+
+        <!-- Columna Derecha: Ficha Biológica Detallada -->
+        <div id="stage-bio-details">
+          <!-- Renderizado por app.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: Registrar / Editar Huevo                                        -->
+  <!-- ======================================================================= -->
+  <div class="modal-overlay" id="egg-form-modal" role="dialog" aria-modal="true" aria-labelledby="egg-form-modal-title">
+    <div class="modal-content" style="max-width: 520px;">
+      <button class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+      
+      <h2 id="egg-form-modal-title" style="font-family: var(--font-heading); font-size: 1.35rem; margin-bottom: 1.25rem;">
+        Registrar Huevo de Impa
+      </h2>
+
+      <form id="egg-form">
+        <div class="form-group">
+          <label for="form-egg-name">Nombre o Etiqueta del Huevo:</label>
+          <input type="text" id="form-egg-name" class="form-control" required placeholder="Ej: Huevo #1 de Impa">
+          <div class="form-help">Consejo: Si marcas con lápiz de grafito suave el cascarón (ej: un '1'), facilita su identificación.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="form-egg-date">Fecha y Hora aproximada de la Puesta:</label>
+          <input type="datetime-local" id="form-egg-date" class="form-control" required>
+          <div class="quick-datetime-buttons">
+            <button type="button" class="quick-btn" id="btn-time-now">Puesto ahora mismo</button>
+            <button type="button" class="quick-btn" id="btn-time-yesterday">Puesto ayer</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="form-egg-status">Estado inicial del huevo:</label>
+          <select id="form-egg-status" class="form-control">
+            <option value="pending">🥚 Pendiente de ovoscopia (Días 0 a 4)</option>
+            <option value="fertile">💓 Fértil confirmado (Vasos / Latido visible)</option>
+            <option value="infertile">⚪ No fértil / Huevo claro</option>
+            <option value="failed">⚠️ Detenido / Muerte temprana</option>
+            <option value="hatched">🐣 ¡Eclosionado!</option>
+          </select>
+          <div class="form-help">La fertilidad solo se puede confirmar de forma segura a partir del Día 5.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="form-egg-notes">Notas u observaciones (opcional):</label>
+          <textarea id="form-egg-notes" class="form-control" rows="2" placeholder="Ej: Puesto en la esquina izquierda del nido, cáscara lisa, peso 4.8g..."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar Huevo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: Guía de Parámetros y Cuidados para Ninfas                       -->
+  <!-- ======================================================================= -->
+  <div class="modal-overlay" id="care-guide-modal" role="dialog" aria-modal="true" aria-labelledby="care-guide-title">
+    <div class="modal-content" style="max-width: 840px;">
+      <button class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+      
+      <h2 id="care-guide-title" style="font-family: var(--font-heading); font-size: 1.4rem;">
+        Guía de Incubación y Cría: <em>Nymphicus hollandicus</em>
+      </h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">
+        Parámetros biológicos esenciales para el éxito de la nidada de Impa.
+      </p>
+
+      <div class="care-guide-grid">
+        <div class="care-card">
+          <h4>🌡️ Temperatura</h4>
+          <p>
+            En incubación natural por los padres, la placa térmica corporal mantiene los huevos a ~37.5 °C. 
+            Si se usa incubadora artificial, mantener entre <strong>37.2 °C y 37.5 °C</strong>. Las fluctuaciones bruscas son peligrosas.
+          </p>
+        </div>
+
+        <div class="care-card">
+          <h4>💧 Humedad</h4>
+          <p>
+            <strong>Días 1 al 17:</strong> Mantener entre <strong>50% y 60%</strong>.<br>
+            <strong>Días 18 al 21 (Eclosión):</strong> Elevar a <strong>65% - 75%</strong> para evitar que las membranas internas se sequen y atrapen al polluelo. Colocar bañera con agua fresca para los padres.
+          </p>
+        </div>
+
+        <div class="care-card">
+          <h4>🔄 Volteo de Huevos</h4>
+          <p>
+            Los padres giran los huevos de 20 a 50 veces al día instintivamente. Esto previene que el embrión se pegue a la cáscara. 
+            A partir del <strong>Día 18 (picaje interno)</strong>, el volteo debe suspenderse.
+          </p>
+        </div>
+
+        <div class="care-card">
+          <h4>🔦 ¿Cómo hacer la Ovoscopia?</h4>
+          <p>
+            En habitación a oscuras, apoyar suavemente una linterna LED fría en el extremo romo del huevo. 
+            <strong>Nunca calentarlo</strong> con bombillas incandescentes y limitar la revisión a menos de 60 segundos con manos desinfectadas.
+          </p>
+        </div>
+
+        <div class="care-card">
+          <h4>🥗 Alimentación de los Padres</h4>
+          <p>
+            Durante la puesta e incubación, la madre necesita abundante <strong>calcio</strong> (hueso de jibia, bloque mineral) para evitar la retención del huevo. Añadir pasta de cría con huevo, semillas germinadas y verduras (espinaca, brócoli, zanahoria).
+          </p>
+        </div>
+
+        <div class="care-card">
+          <h4>⚠️ Signos de Alarma al Nacer</h4>
+          <p>
+            El nacimiento puede tardar de 24 a 48 horas desde el primer picaje exterior. <strong>Nunca tirar de la cáscara a la fuerza</strong>, ya que los vasos sanguíneos tardan horas en secarse. Intervenir solo si pasan más de 40h sin progreso y la membrana está seca y blanca.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="embryo-data.js"></script>
+  <script src="embryo-visualizer.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
