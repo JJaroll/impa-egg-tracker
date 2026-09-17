@@ -362,37 +362,37 @@
     </main>
 
     <!-- ============ BARRA DE NAVEGACIÓN MÓVIL (Inferior estilo Cicada) ============ -->
-    <nav class="flex md:hidden fixed bottom-0 left-0 right-0 z-40 bg-sidebar/95 backdrop-blur-xl border-t border-theme/60 px-3 py-1.5 justify-around items-center text-sidebar select-none shadow-[0_-4px_20px_rgba(0,0,0,0.3)] safe-bottom" aria-label="Navegación móvil">
-      <button type="button" class="nav-item-mobile nav-item-active flex flex-col items-center py-1 px-3 rounded-xl transition-all text-center" data-view="dashboard" onclick="showView('dashboard')">
-        <svg class="w-5 h-5 mb-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <nav class="mobile-nav-bar flex md:hidden fixed bottom-0 left-0 right-0 z-40 px-2 py-1.5 justify-around items-center select-none safe-bottom" aria-label="Navegación móvil">
+      <button type="button" class="mobile-nav-btn active" data-view="dashboard" onclick="showView('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2C8 2 5 7 5 13a7 7 0 0 0 14 0c0-6-3-11-7-11z"/>
           <path d="M3 20c3 1.5 6 1.5 9 1.5s6 0 9-1.5"/>
         </svg>
-        <span class="font-label-caps text-[9px] font-bold tracking-wider leading-none" data-i18n="nav_dashboard">NIDADA</span>
+        <span data-i18n="nav_dashboard">NIDADA</span>
       </button>
-      <button type="button" class="nav-item-mobile nav-item-inactive flex flex-col items-center py-1 px-3 rounded-xl transition-all text-center" data-view="embryo" onclick="showView('embryo')">
-        <svg class="w-5 h-5 mb-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button type="button" class="mobile-nav-btn" data-view="embryo" onclick="showView('embryo')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6 18h8"/>
           <path d="M3 22h18"/>
           <path d="M14 22a7 7 0 1 0 0-14h-1"/>
           <path d="M9 14h2"/>
           <path d="M9 12a2 2 0 1 1-2-2c1 0 2 1 2 2z"/>
         </svg>
-        <span class="font-label-caps text-[9px] font-bold tracking-wider leading-none" data-i18n="nav_embryo">EMBRIÓN</span>
+        <span data-i18n="nav_embryo">EMBRIÓN</span>
       </button>
-      <button type="button" class="nav-item-mobile nav-item-inactive flex flex-col items-center py-1 px-3 rounded-xl transition-all text-center" data-view="care" onclick="showView('care')">
-        <svg class="w-5 h-5 mb-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button type="button" class="mobile-nav-btn" data-view="care" onclick="showView('care')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
         </svg>
-        <span class="font-label-caps text-[9px] font-bold tracking-wider leading-none" data-i18n="nav_care">GUÍA</span>
+        <span data-i18n="nav_care">GUÍA</span>
       </button>
-      <button type="button" class="nav-item-mobile nav-item-inactive flex flex-col items-center py-1 px-3 rounded-xl transition-all text-center" onclick="openSettings()" title="Ajustes" data-i18n-title="settings_tooltip">
-        <svg class="w-5 h-5 mb-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button type="button" class="mobile-nav-btn" onclick="openSettings()" title="Ajustes" data-i18n-title="settings_tooltip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
-        <span class="font-label-caps text-[9px] font-bold tracking-wider leading-none" data-i18n="settings_tooltip">AJUSTES</span>
+        <span data-i18n="settings_tooltip">AJUSTES</span>
       </button>
     </nav>
   </div>
@@ -683,11 +683,10 @@
         el.classList.toggle('nav-item-inactive', !isActive);
       });
 
-      document.querySelectorAll('.nav-item-mobile').forEach(el => {
+      document.querySelectorAll('.mobile-nav-btn').forEach(el => {
         if (el.dataset.view) {
           const isActive = el.dataset.view === name;
-          el.classList.toggle('nav-item-active', isActive);
-          el.classList.toggle('nav-item-inactive', !isActive);
+          el.classList.toggle('active', isActive);
         }
       });
     }

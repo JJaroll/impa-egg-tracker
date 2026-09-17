@@ -71,26 +71,134 @@ body {
     background: rgba(0, 0, 0, 0.05);
 }
 
-/* Navegación Móvil (Bottom Navigation Bar) */
-.nav-item-mobile {
-    color: rgba(26, 27, 32, 0.55);
-    transition: all 0.2s ease;
+/* =========================================================
+   BARRA DE NAVEGACIÓN MÓVIL (Bottom Navigation Bar)
+   ========================================================= */
+.mobile-nav-bar {
+    background-color: #1a1b1f !important;
+    background: rgba(24, 25, 29, 0.96) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.6);
 }
-[data-theme="dark"] .nav-item-mobile {
-    color: rgba(255, 255, 255, 0.55);
+
+[data-theme="light"] .mobile-nav-bar {
+    background-color: #f3f4f6 !important;
+    background: rgba(243, 244, 246, 0.96) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
 }
-.nav-item-mobile.nav-item-active {
+
+/* Botón individual de la barra móvil */
+.mobile-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 14px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    color: #94A3B8 !important; /* Slate claro brillante, altamente visible sobre fondo oscuro */
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    min-width: 68px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav-btn svg {
+    width: 22px;
+    height: 22px;
+    margin-bottom: 3px;
+    stroke: #94A3B8 !important;
+    stroke-width: 2;
+    transition: stroke 0.2s ease, transform 0.2s ease;
+}
+
+.mobile-nav-btn span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    color: #94A3B8 !important;
+    transition: color 0.2s ease;
+}
+
+/* Estado ACTIVO (Modo Oscuro & General) */
+.mobile-nav-btn.active {
     background: var(--accent-light) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 14px var(--accent-light);
+}
+
+.mobile-nav-btn.active svg {
+    stroke: var(--accent) !important;
+    transform: scale(1.1);
+}
+
+.mobile-nav-btn.active span {
     color: var(--accent) !important;
 }
-.nav-item-mobile.nav-item-inactive {
-    color: rgba(26, 27, 32, 0.5) !important;
+
+/* Hover y Touch Feedback */
+.mobile-nav-btn:hover:not(.active),
+.mobile-nav-btn:focus-visible:not(.active) {
+    color: #FFFFFF !important;
 }
-[data-theme="dark"] .nav-item-mobile.nav-item-inactive {
-    color: rgba(255, 255, 255, 0.45) !important;
+
+.mobile-nav-btn:hover:not(.active) svg,
+.mobile-nav-btn:focus-visible:not(.active) svg {
+    stroke: #FFFFFF !important;
 }
-.nav-item-mobile:active {
+
+.mobile-nav-btn:hover:not(.active) span,
+.mobile-nav-btn:focus-visible:not(.active) span {
+    color: #FFFFFF !important;
+}
+
+.mobile-nav-btn:active {
     transform: scale(0.92);
+}
+
+/* MODO CLARO ([data-theme="light"]) */
+[data-theme="light"] .mobile-nav-btn {
+    color: #64748B !important;
+}
+
+[data-theme="light"] .mobile-nav-btn svg {
+    stroke: #64748B !important;
+}
+
+[data-theme="light"] .mobile-nav-btn span {
+    color: #64748B !important;
+}
+
+[data-theme="light"] .mobile-nav-btn.active {
+    background: var(--accent-light) !important;
+    border-color: var(--accent) !important;
+}
+
+[data-theme="light"] .mobile-nav-btn.active svg {
+    stroke: var(--accent) !important;
+}
+
+[data-theme="light"] .mobile-nav-btn.active span {
+    color: var(--accent) !important;
+}
+
+[data-theme="light"] .mobile-nav-btn:hover:not(.active) {
+    color: #0F172A !important;
+}
+
+[data-theme="light"] .mobile-nav-btn:hover:not(.active) svg {
+    stroke: #0F172A !important;
+}
+
+[data-theme="light"] .mobile-nav-btn:hover:not(.active) span {
+    color: #0F172A !important;
 }
 
 /* Soporte para barra inferior de gestos en iOS (Safe Area) */
