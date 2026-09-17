@@ -132,19 +132,9 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <button type="button" onclick="app.openAddEggModal()" class="btn-primary px-3 sm:px-4 py-2 rounded-xl text-xs font-label-caps tracking-wider flex items-center gap-1.5 shadow-md">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-            <span class="hidden sm:inline" data-i18n="btn_add_egg">REGISTRAR HUEVO</span>
-            <span class="sm:hidden">HUEVO</span>
-          </button>
-          <button type="button" onclick="app.exportBackup()" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1" title="Respaldar datos JSON">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          </button>
-          <label for="input-import-backup" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 cursor-pointer" title="Restaurar datos JSON">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-          </label>
-          <input type="file" id="input-import-backup" accept=".json" class="hidden">
+        <!-- Controles de Rol (Modo Lectura / Modo Administrador) -->
+        <div id="header-role-controls" class="flex items-center gap-2">
+          <!-- Inyectado dinámicamente por app.updateRoleUI() -->
         </div>
       </header>
 
@@ -217,9 +207,16 @@
 
         <!-- Listado de Huevos Individuales -->
         <section class="flex flex-col gap-3">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <h2 class="font-label-caps font-bold text-xs tracking-widest text-muted uppercase" data-i18n="title_eggs_list">MONITOREO INDIVIDUAL DE HUEVOS</h2>
-            <span class="text-xs text-muted font-label-caps">Periodo: 21 Días</span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="app.downloadAllEggsIcs()" class="btn-secondary px-3 py-1.5 rounded-xl text-xs font-label-caps flex items-center gap-1.5 text-accent border-accent/30 hover:border-accent/60 transition-all shadow-sm" title="Descargar todos los recordatorios (Día 5, Día 18 y Día 21) en formato iCal (.ics)">
+                <span class="material-symbols-outlined text-[16px]">calendar_add_on</span>
+                <span class="hidden sm:inline">RECORDATORIOS DE LA NIDADA (.ICS)</span>
+                <span class="sm:hidden">RECORDATORIOS (.ICS)</span>
+              </button>
+              <span class="text-xs text-muted font-label-caps hidden md:inline">21 Días</span>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4" id="eggs-grid">
@@ -403,6 +400,14 @@
           <button type="button" class="color-btn w-8 h-8 rounded-full" style="background-color:#E62E6B;" data-color-val="pink" onclick="selectColor('pink')" title="Rosa"></button>
         </div>
       </div>
+
+      <!-- GESTIÓN DE ACCESO (ADMINISTRADOR) -->
+      <div class="flex flex-col gap-2 border-t border-theme pt-4">
+        <span class="font-label-caps text-[11px] text-muted tracking-widest font-bold">SEGURIDAD Y ROL</span>
+        <div id="settings-role-section" class="p-3 rounded-xl bg-input/40 border border-theme flex flex-col gap-2">
+          <!-- Inyectado dinámicamente por app.updateRoleUI() -->
+        </div>
+      </div>
     </div>
   </div>
 
@@ -510,6 +515,108 @@
         </div>
       </form>
     </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: Acceso de Administrador / Dueño de Impa                           -->
+  <!-- ======================================================================= -->
+  <div id="modal-admin-login" class="hidden fixed inset-0 z-[110] items-center justify-center bg-black/70 backdrop-blur-md" onclick="if(event.target === this) app.closeModal('modal-admin-login')">
+    <div class="w-full max-w-sm mx-4 p-6 flex flex-col gap-4 rounded-2xl border border-accent/40 bg-card shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
+            <span class="material-symbols-outlined text-[20px]">lock</span>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-base text-main">Acceso Dueño de Impa</h3>
+            <p class="text-[11px] text-muted font-label-caps">Habilita registro y edición</p>
+          </div>
+        </div>
+        <button type="button" onclick="app.closeModal('modal-admin-login')" class="material-symbols-outlined text-muted/60 hover:text-main">close</button>
+      </div>
+
+      <form id="form-admin-login" onsubmit="event.preventDefault(); app.submitAdminPin();" class="flex flex-col gap-3.5 mt-1">
+        <div class="flex flex-col gap-1.5">
+          <label for="input-admin-pin" class="text-[11px] font-label-caps text-muted font-bold tracking-wider">PIN DE SEGURIDAD</label>
+          <input type="password" id="input-admin-pin" maxlength="16" class="ui-input p-3 text-center text-xl tracking-[0.3em] font-data font-bold rounded-xl" placeholder="••••" autocomplete="current-password">
+          <p id="admin-pin-error" class="text-xs text-red-400 font-medium hidden flex items-center gap-1 mt-1">
+            <span class="material-symbols-outlined text-[14px]">error</span>
+            <span>PIN incorrecto. Inténtalo de nuevo.</span>
+          </p>
+        </div>
+
+        <label class="flex items-center gap-2 text-xs text-muted cursor-pointer select-none">
+          <input type="checkbox" id="check-remember-admin" class="rounded border-theme bg-input accent-accent">
+          <span>Recordar sesión en este navegador</span>
+        </label>
+
+        <div class="flex gap-2 mt-1">
+          <button type="button" onclick="app.closeModal('modal-admin-login')" class="btn-secondary flex-1 py-2.5 rounded-xl font-label-caps text-xs">
+            CANCELAR
+          </button>
+          <button type="submit" class="btn-primary flex-1 py-2.5 rounded-xl font-label-caps text-xs flex items-center justify-center gap-1.5 shadow-md">
+            <span class="material-symbols-outlined text-[16px]">lock_open</span>
+            <span>DESBLOQUEAR</span>
+          </button>
+        </div>
+
+        <p class="text-[10px] text-muted/70 text-center font-label-caps mt-0.5">
+          PIN por defecto: <strong class="text-accent">2026</strong> (modificable en Ajustes)
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: Publicar Datos Canónicos (data/nest.json)                         -->
+  <!-- ======================================================================= -->
+  <div id="modal-publish-nest" class="hidden fixed inset-0 z-[110] items-center justify-center bg-black/70 backdrop-blur-md" onclick="if(event.target === this) app.closeModal('modal-publish-nest')">
+    <div class="w-full max-w-lg mx-4 p-6 flex flex-col gap-4 rounded-2xl border border-theme bg-card shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center text-accent">
+            <span class="material-symbols-outlined text-[20px]">cloud_upload</span>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-base text-main">Publicar Datos de la Nidada</h3>
+            <p class="text-[11px] text-muted font-label-caps">Actualización para visitantes en GitHub Pages</p>
+          </div>
+        </div>
+        <button type="button" onclick="app.closeModal('modal-publish-nest')" class="material-symbols-outlined text-muted/60 hover:text-main">close</button>
+      </div>
+
+      <p class="text-xs text-muted leading-relaxed">
+        Los cambios que realizas se guardan en tu navegador. Para que tus visitantes vean los nuevos huevos en GitHub Pages, descarga el archivo <code class="text-accent font-bold">nest.json</code> y súbelo a la carpeta <code class="text-accent font-bold">data/</code> de tu repositorio en GitHub.
+      </p>
+
+      <div class="p-3 rounded-xl bg-input/40 border border-theme flex flex-col gap-2">
+        <div class="flex justify-between items-center text-xs font-label-caps">
+          <span class="text-muted">Total de huevos a publicar:</span>
+          <span class="font-bold text-main" id="publish-eggs-count">1</span>
+        </div>
+        <div class="flex justify-between items-center text-xs font-label-caps">
+          <span class="text-muted">Destino en repositorio:</span>
+          <span class="text-accent font-mono">data/nest.json</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-2 mt-1">
+        <button type="button" onclick="app.downloadCanonicalNestJson()" class="btn-primary flex-1 py-2.5 px-4 rounded-xl text-xs font-label-caps flex items-center justify-center gap-1.5 shadow-md">
+          <span class="material-symbols-outlined text-[18px]">download</span>
+          <span>DESCARGAR data/nest.json</span>
+        </button>
+        <button type="button" onclick="app.copyNestJsonToClipboard()" class="btn-secondary flex-1 py-2.5 px-4 rounded-xl text-xs font-label-caps flex items-center justify-center gap-1.5">
+          <span class="material-symbols-outlined text-[18px]">content_copy</span>
+          <span id="btn-copy-nest-label">COPIAR JSON</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor Flotante de Toast Notifications -->
+  <div id="toast-container" class="toast-alert glass-card p-3 rounded-xl border border-theme shadow-2xl flex items-center gap-2.5 text-xs text-main">
+    <span class="material-symbols-outlined text-[18px] text-accent" id="toast-icon">check_circle</span>
+    <span id="toast-message">Mensaje</span>
   </div>
 
   <!-- Scripts -->

@@ -1,6 +1,6 @@
 /**
  * Aplicación de Monitoreo de Incubación para Ninfas (Nymphicus hollandicus)
- * Lógica principal, timers en tiempo real, persistencia local y exportación ICS.
+ * Lógica principal, timers en tiempo real, persistencia local, autenticación de roles y exportación ICS.
  */
 
 // Constantes de tiempo
@@ -21,13 +21,25 @@ class EggTrackerApp {
     this.activeEggForVisualizer = null;
     this.activeEggForEdit = null;
 
+    // Sistema de Roles: Modo Lectura (visitante) vs Modo Administrador (dueño de Impa)
+    this.isAdmin = false;
+    // PIN por defecto: 2026 (hash SHA-256 precalculado para no exponer texto plano)
+    this.DEFAULT_PIN_HASH = '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab';
+
     this.init();
   }
 
-  init() {
-    this.loadData();
+  async init() {
+    // Comprobar si hay sesión activa de administrador
+    this.checkStoredAuth();
+
+    // Cargar datos canónicos o locales
+    await this.loadData();
+
+    // Inicializar componentes
     this.setupVisualizer();
     this.bindEvents();
+    this.updateRoleUI();
     this.render();
     
     // Timer en vivo para actualizar contadores cada segundo
@@ -36,43 +48,292 @@ class EggTrackerApp {
     }, 1000);
   }
 
-  loadData() {
+  checkStoredAuth() {
+    try {
+      const isSession = sessionStorage.getItem('impa_admin_auth') === 'true';
+      const isLocal = localStorage.getItem('impa_admin_auth') === 'true';
+      this.isAdmin = isSession || isLocal;
+    } catch (e) {
+      this.isAdmin = false;
+    }
+  }
+
+  async loadData() {
+    // Si es administrador y tiene datos guardados en su navegador, respetar su sesión local
+    if (this.isAdmin) {
+      try {
+        const saved = localStorage.getItem('impa_egg_tracker_data');
+        if (saved) {
+          this.eggs = JSON.parse(saved);
+          return;
+        }
+      } catch (e) {
+        console.error('Error al cargar datos locales de admin:', e);
+      }
+    }
+
+    // Para visitantes (o admin sin datos locales), cargar la fuente canónica data/nest.json
+    try {
+      const resp = await fetch(`data/nest.json?t=${Date.now()}`);
+      if (resp.ok) {
+        const nestData = await resp.json();
+        if (nestData && Array.isArray(nestData.eggs) && nestData.eggs.length > 0) {
+          this.eggs = nestData.eggs;
+          // Si es admin, guardar copia local
+          if (this.isAdmin) {
+            this.saveData();
+          }
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('No se pudo cargar data/nest.json desde red, usando almacenamiento local:', err);
+    }
+
+    // Fallback: verificar localStorage
     try {
       const saved = localStorage.getItem('impa_egg_tracker_data');
       if (saved) {
         this.eggs = JSON.parse(saved);
-      } else {
-        // Inicializar con el huevo #1 de Impa reportado hoy
-        const now = new Date();
-        // Fijar hora aprox 16:32 como indicó el usuario
-        const layTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 16, 32, 0);
-        // Si la hora calculada está en el futuro, usar ahora mismo
-        const initialDate = layTime > now ? now : layTime;
-
-        this.eggs = [
-          {
-            id: 'egg_' + Date.now(),
-            number: 1,
-            name: 'Huevo #1 de Impa',
-            layDate: initialDate.toISOString(),
-            status: 'pending', // 'pending' | 'fertile' | 'infertile' | 'failed' | 'hatched'
-            notes: 'Primer huevo de la nidada de Impa. Puesta detectada a media tarde.'
-          }
-        ];
-        this.saveData();
+        return;
       }
     } catch (e) {
       console.error('Error al cargar datos de localStorage:', e);
-      this.eggs = [];
+    }
+
+    // Fallback inicial: huevo #1 de Impa del 17 de septiembre
+    this.eggs = [
+      {
+        id: 'egg_1_impa',
+        number: 1,
+        name: 'Huevo #1 de Impa',
+        layDate: '2026-09-17T16:32:00-03:00',
+        status: 'pending', // 'pending' | 'fertile' | 'infertile' | 'failed' | 'hatched'
+        notes: 'Primer huevo de la nidada de Impa. Puesta detectada el 17 de septiembre a las 16:32 aprox. Incubación estándar de 21 días.'
+      }
+    ];
+
+    if (this.isAdmin) {
+      this.saveData();
     }
   }
 
   saveData() {
+    if (!this.isAdmin) {
+      console.warn('Acción bloqueada: Solo el dueño de Impa puede modificar datos.');
+      return;
+    }
     try {
       localStorage.setItem('impa_egg_tracker_data', JSON.stringify(this.eggs));
     } catch (e) {
       console.error('Error al guardar datos:', e);
     }
+  }
+
+  // =========================================================================
+  // Autenticación de Roles (SHA-256)
+  // =========================================================================
+
+  async sha256(str) {
+    const buffer = new TextEncoder().encode(str);
+    const digest = await crypto.subtle.digest('SHA-256', buffer);
+    return Array.from(new Uint8Array(digest))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  openAdminLoginModal() {
+    const input = document.getElementById('input-admin-pin');
+    const err = document.getElementById('admin-pin-error');
+    if (err) err.classList.add('hidden');
+    if (input) {
+      input.value = '';
+      input.classList.remove('shake-input');
+    }
+    this.openModal('modal-admin-login');
+    setTimeout(() => {
+      if (input) input.focus();
+    }, 150);
+  }
+
+  async submitAdminPin() {
+    const input = document.getElementById('input-admin-pin');
+    const pin = input ? input.value.trim() : '';
+    const remember = document.getElementById('check-remember-admin')?.checked || false;
+    const err = document.getElementById('admin-pin-error');
+
+    if (!pin) {
+      if (input) {
+        input.classList.add('shake-input');
+        setTimeout(() => input.classList.remove('shake-input'), 450);
+      }
+      return;
+    }
+
+    try {
+      const hash = await this.sha256(pin);
+      const authorizedHash = localStorage.getItem('impa_admin_custom_pin_hash') || this.DEFAULT_PIN_HASH;
+
+      if (hash === authorizedHash) {
+        this.isAdmin = true;
+        sessionStorage.setItem('impa_admin_auth', 'true');
+        if (remember) {
+          localStorage.setItem('impa_admin_auth', 'true');
+        }
+        this.closeModal('modal-admin-login');
+        this.updateRoleUI();
+        this.render();
+        this.showToast('¡Modo Dueño desbloqueado! Puedes registrar y editar huevos.', 'verified_user');
+      } else {
+        if (err) err.classList.remove('hidden');
+        if (input) {
+          input.classList.add('shake-input');
+          setTimeout(() => input.classList.remove('shake-input'), 450);
+          input.select();
+        }
+      }
+    } catch (e) {
+      console.error('Error al verificar PIN:', e);
+      alert('Error en la verificación de seguridad.');
+    }
+  }
+
+  logoutAdmin() {
+    this.isAdmin = false;
+    try {
+      sessionStorage.removeItem('impa_admin_auth');
+      localStorage.removeItem('impa_admin_auth');
+    } catch (e) {}
+
+    this.updateRoleUI();
+    this.render();
+    this.showToast('Sesión de administrador cerrada. Estás en Modo Lectura.', 'lock');
+  }
+
+  updateRoleUI() {
+    const headerContainer = document.getElementById('header-role-controls');
+    if (headerContainer) {
+      if (!this.isAdmin) {
+        // VISTA VISITANTE (MODO LECTURA)
+        headerContainer.innerHTML = `
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-xs font-label-caps text-blue-300">
+            <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+            <span class="hidden sm:inline">MODO LECTURA</span>
+            <span class="sm:hidden">LECTURA</span>
+          </div>
+          <button type="button" onclick="app.openAdminLoginModal()" class="btn-secondary px-2.5 py-1.5 rounded-xl text-xs font-label-caps flex items-center gap-1.5 text-amber-400 border-amber-500/30 hover:border-amber-400 hover:bg-amber-500/10 transition-all shadow-sm" title="Acceso Dueño de Impa (Desbloquear edición)">
+            <span class="material-symbols-outlined text-[16px]">lock</span>
+            <span class="hidden sm:inline">ACCESO DUEÑO</span>
+          </button>
+        `;
+      } else {
+        // VISTA ADMINISTRADOR (DUEÑO DE IMPA)
+        headerContainer.innerHTML = `
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-xs font-label-caps text-amber-300 font-bold">
+            <span>👑</span>
+            <span class="hidden sm:inline">DUEÑO DE IMPA</span>
+            <span class="sm:hidden">DUEÑO</span>
+          </div>
+          <button type="button" onclick="app.openAddEggModal()" class="btn-primary px-3 sm:px-4 py-2 rounded-xl text-xs font-label-caps tracking-wider flex items-center gap-1.5 shadow-md">
+            <span class="material-symbols-outlined text-[16px]">add</span>
+            <span class="hidden sm:inline">REGISTRAR HUEVO</span>
+            <span class="sm:hidden">HUEVO</span>
+          </button>
+          <button type="button" onclick="app.openPublishModal()" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 text-emerald-400 border-emerald-500/30 hover:border-emerald-400 hover:bg-emerald-500/10 transition-all" title="Publicar nest.json para visitantes en GitHub Pages">
+            <span class="material-symbols-outlined text-[16px]">cloud_upload</span>
+            <span class="hidden md:inline">PUBLICAR</span>
+          </button>
+          <button type="button" onclick="app.exportBackup()" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1" title="Respaldar datos JSON">
+            <span class="material-symbols-outlined text-[16px]">download</span>
+          </button>
+          <label for="input-import-backup" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 cursor-pointer" title="Restaurar datos JSON">
+            <span class="material-symbols-outlined text-[16px]">upload</span>
+          </label>
+          <input type="file" id="input-import-backup" accept=".json" class="hidden">
+          <button type="button" onclick="app.logoutAdmin()" class="btn-secondary px-2.5 py-2 rounded-xl text-xs font-label-caps flex items-center gap-1 text-red-400 border-red-500/30 hover:border-red-400 hover:bg-red-500/10 transition-all" title="Cerrar sesión de administrador">
+            <span class="material-symbols-outlined text-[16px]">lock_open</span>
+            <span class="hidden sm:inline">BLOQUEAR</span>
+          </button>
+        `;
+
+        // Re-vincular input de importación en caso de recreación
+        const inputImport = document.getElementById('input-import-backup');
+        if (inputImport) {
+          inputImport.addEventListener('change', (e) => this.importBackup(e));
+        }
+      }
+    }
+
+    // Actualizar sección de seguridad en modal de Ajustes
+    const settingsRoleSection = document.getElementById('settings-role-section');
+    if (settingsRoleSection) {
+      if (this.isAdmin) {
+        settingsRoleSection.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                <span>👑</span>
+                <span>Modo Administrador Activo</span>
+              </div>
+              <p class="text-[11px] text-muted">Tienes permisos completos para gestionar los huevos de Impa.</p>
+            </div>
+            <button type="button" onclick="app.logoutAdmin(); closeSettings();" class="btn-secondary px-2.5 py-1 rounded-lg text-xs text-red-400 font-label-caps border-red-500/30">
+              Cerrar Sesión
+            </button>
+          </div>
+          <div class="pt-2 border-t border-theme flex items-center justify-between">
+            <span class="text-[11px] text-muted">Seguridad:</span>
+            <button type="button" onclick="app.promptChangePin()" class="btn-secondary px-2 py-1 rounded-lg text-[10px] font-label-caps text-accent border-accent/30">
+              Cambiar PIN
+            </button>
+          </div>
+        `;
+      } else {
+        settingsRoleSection.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-1.5 text-xs font-bold text-blue-300">
+                <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                <span>Modo Visitante (Solo Lectura)</span>
+              </div>
+              <p class="text-[11px] text-muted">Visualización en vivo y descarga de recordatorios.</p>
+            </div>
+            <button type="button" onclick="closeSettings(); app.openAdminLoginModal();" class="btn-secondary px-2.5 py-1 rounded-lg text-xs text-amber-400 font-label-caps border-amber-500/30">
+              Desbloquear Dueño
+            </button>
+          </div>
+        `;
+      }
+    }
+  }
+
+  async promptChangePin() {
+    const currentPin = prompt('Ingresa tu PIN actual:');
+    if (!currentPin) return;
+
+    const currentHash = await this.sha256(currentPin.trim());
+    const authorizedHash = localStorage.getItem('impa_admin_custom_pin_hash') || this.DEFAULT_PIN_HASH;
+
+    if (currentHash !== authorizedHash) {
+      alert('El PIN actual es incorrecto.');
+      return;
+    }
+
+    const newPin = prompt('Ingresa tu NUEVO PIN (4 a 12 dígitos o caracteres):');
+    if (!newPin || newPin.trim().length < 4) {
+      alert('El PIN debe tener al menos 4 caracteres.');
+      return;
+    }
+
+    const confirmPin = prompt('Confirma tu NUEVO PIN:');
+    if (newPin !== confirmPin) {
+      alert('Los PINs no coinciden. No se realizaron cambios.');
+      return;
+    }
+
+    const newHash = await this.sha256(newPin.trim());
+    localStorage.setItem('impa_admin_custom_pin_hash', newHash);
+    this.showToast('¡PIN de seguridad actualizado correctamente!', 'key');
   }
 
   setupVisualizer() {
@@ -83,30 +344,6 @@ class EggTrackerApp {
   }
 
   bindEvents() {
-    // Botón Registrar Huevo
-    const btnAddEgg = document.getElementById('btn-add-egg');
-    if (btnAddEgg) {
-      btnAddEgg.addEventListener('click', () => this.openAddEggModal());
-    }
-
-    // Botón Guía de Cuidados
-    const btnCareGuide = document.getElementById('btn-care-guide');
-    if (btnCareGuide) {
-      btnCareGuide.addEventListener('click', () => this.openModal('care-guide-modal'));
-    }
-
-    // Botón Exportar Respaldo
-    const btnBackup = document.getElementById('btn-backup-data');
-    if (btnBackup) {
-      btnBackup.addEventListener('click', () => this.exportBackup());
-    }
-
-    // Input Importar Respaldo
-    const inputImport = document.getElementById('input-import-backup');
-    if (inputImport) {
-      inputImport.addEventListener('change', (e) => this.importBackup(e));
-    }
-
     // Slider de Días en Visor
     const daySlider = document.getElementById('dev-day-slider');
     if (daySlider) {
@@ -123,12 +360,12 @@ class EggTrackerApp {
       btnModeCandling.addEventListener('click', () => {
         btnModeCandling.classList.add('active');
         btnModeAnatomy.classList.remove('active');
-        this.visualizer.setMode('candling');
+        if (this.visualizer) this.visualizer.setMode('candling');
       });
       btnModeAnatomy.addEventListener('click', () => {
         btnModeAnatomy.classList.add('active');
         btnModeCandling.classList.remove('active');
-        this.visualizer.setMode('anatomical');
+        if (this.visualizer) this.visualizer.setMode('anatomical');
       });
     }
 
@@ -140,35 +377,6 @@ class EggTrackerApp {
         this.handleEggFormSubmit();
       });
     }
-
-    // Botones Rápidos de Fecha/Hora
-    const btnTimeNow = document.getElementById('btn-time-now');
-    const btnTimeYesterday = document.getElementById('btn-time-yesterday');
-    if (btnTimeNow) {
-      btnTimeNow.addEventListener('click', () => this.setFormDateTime(new Date()));
-    }
-    if (btnTimeYesterday) {
-      btnTimeYesterday.addEventListener('click', () => {
-        const d = new Date(Date.now() - 24 * MS_PER_HOUR);
-        this.setFormDateTime(d);
-      });
-    }
-
-    // Cierre de Modales
-    document.querySelectorAll('.modal-close-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const modal = e.target.closest('.modal-overlay');
-        if (modal) modal.classList.remove('active');
-      });
-    });
-
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-          overlay.classList.remove('active');
-        }
-      });
-    });
   }
 
   // =========================================================================
@@ -270,105 +478,107 @@ class EggTrackerApp {
       return;
     }
 
-    // Buscar el huevo puesto más recientemente
-    const sortedEggs = [...this.eggs].sort((a, b) => new Date(b.layDate) - new Date(a.layDate));
-    const latestEgg = sortedEggs[0];
-    const latestLayTime = new Date(latestEgg.layDate).getTime();
-    const nextExpectedLayTime = latestLayTime + (EGG_INTERVAL_HOURS * MS_PER_HOUR);
-    const msToNext = nextExpectedLayTime - Date.now();
+    // Ordenar huevos por fecha de puesta
+    const sorted = [...this.eggs].sort((a, b) => new Date(a.layDate) - new Date(b.layDate));
+    const lastEgg = sorted[sorted.length - 1];
+    const lastLayTime = new Date(lastEgg.layDate).getTime();
+    const nextLayTargetMs = lastLayTime + (EGG_INTERVAL_HOURS * MS_PER_HOUR);
+    const nextNumber = sorted.length + 1;
 
-    const nextEggNumber = this.eggs.length + 1;
     const titleEl = document.getElementById('next-egg-title');
     const descEl = document.getElementById('next-egg-desc');
-    const countdownEl = document.getElementById('next-egg-timer');
+    const timerEl = document.getElementById('next-egg-timer');
 
-    if (titleEl) titleEl.textContent = `Próximo huevo estimado: Huevo #${nextEggNumber}`;
-    if (descEl) descEl.textContent = `Las ninfas suelen poner cada ~48h. Fecha estimada: ${this.formatDate(new Date(nextExpectedLayTime))}`;
-    
-    if (countdownEl) {
-      if (msToNext > 0) {
-        countdownEl.textContent = `Faltan aprox. ${this.formatDuration(msToNext)}`;
+    if (titleEl) titleEl.textContent = `Próximo huevo estimado: Huevo #${nextNumber}`;
+    if (descEl) descEl.textContent = `Las ninfas suelen poner cada ~48 horas. Última puesta: ${this.formatDate(new Date(lastLayTime))}`;
+
+    const now = Date.now();
+    const msRemaining = nextLayTargetMs - now;
+
+    if (timerEl) {
+      if (msRemaining > 0) {
+        timerEl.textContent = `Faltan ~${this.formatDuration(msRemaining)}`;
+        timerEl.className = 'font-data font-bold text-sm sm:text-base text-accent px-3 py-1.5 rounded-lg bg-black/30 border border-accent/30';
       } else {
-        countdownEl.textContent = `¡Listo para poner! (Han pasado +48h)`;
+        timerEl.textContent = `¡Ventana de puesta abierta! (hace ${this.formatDuration(Math.abs(msRemaining))})`;
+        timerEl.className = 'font-data font-bold text-sm sm:text-base text-emerald-400 px-3 py-1.5 rounded-lg bg-black/30 border border-emerald-500/40 animate-pulse';
       }
     }
+
     banner.style.display = 'flex';
   }
 
   renderEggsGrid() {
-    const grid = document.getElementById('eggs-grid');
-    if (!grid) return;
+    const container = document.getElementById('eggs-grid');
+    if (!container) return;
 
     if (this.eggs.length === 0) {
-      grid.innerHTML = `
-        <div class="glass-card p-8 flex flex-col items-center justify-center text-center col-span-full border-dashed">
-          <div class="text-4xl mb-2">🪺</div>
-          <h3 class="font-display font-bold text-lg text-main mb-1">Aún no hay huevos en la nidada</h3>
-          <p class="text-xs text-muted max-w-sm mb-4 font-label-caps">Registra el primer huevo de Impa para activar el monitor de incubación y ovoscopia.</p>
-          <button class="btn-primary px-4 py-2 rounded-xl text-xs font-label-caps" onclick="app.openAddEggModal()">+ REGISTRAR PRIMER HUEVO</button>
+      container.innerHTML = `
+        <div class="col-span-full glass-card p-8 flex flex-col items-center justify-center text-center gap-3">
+          <span class="material-symbols-outlined text-muted text-5xl">egg</span>
+          <h3 class="font-display font-bold text-base text-main">No hay huevos registrados aún</h3>
+          <p class="text-xs text-muted max-w-sm">
+            ${this.isAdmin ? 'Registra el primer huevo puesto por Impa para iniciar el cronograma.' : 'El nido de Impa aún no tiene huevos publicados.'}
+          </p>
+          ${this.isAdmin ? `
+            <button onclick="app.openAddEggModal()" class="btn-primary py-2 px-4 rounded-xl text-xs font-label-caps mt-2 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px]">add</span>
+              <span>REGISTRAR HUEVO #1</span>
+            </button>
+          ` : ''}
         </div>
       `;
       return;
     }
 
-    // Ordenar por fecha de puesta ascendente (Huevo 1, 2, 3...)
-    const sorted = [...this.eggs].sort((a, b) => new Date(a.layDate) - new Date(b.layDate));
+    const statusBadgeMap = {
+      pending: { label: 'PENDIENTE DE OVOSCOPIA', class: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+      fertile: { label: 'FÉRTIL CONFIRMADO', class: 'bg-green-500/15 text-green-400 border-green-500/30' },
+      infertile: { label: 'NO FÉRTIL (CLARO)', class: 'bg-slate-500/15 text-slate-400 border-slate-500/30' },
+      failed: { label: 'DETENIDO / MALOGRADO', class: 'bg-red-500/15 text-red-400 border-red-500/30' },
+      hatched: { label: '¡ECLOSIONADO!', class: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' }
+    };
 
-    grid.innerHTML = sorted.map(egg => {
+    container.innerHTML = this.eggs.map(egg => {
       const m = this.getEggMetrics(egg);
-      const isFertile = egg.status === 'fertile';
-      const isHatched = egg.status === 'hatched';
-      const isPending = egg.status === 'pending';
-
-      const statusLabels = {
-        pending: '🥚 Pendiente Ovoscopia',
-        fertile: '💓 Fértil Confirmado',
-        infertile: '⚪ Infértil / Claro',
-        failed: '⚠️ Detenido',
-        hatched: '🐣 ¡Eclosionado!'
-      };
+      const badge = statusBadgeMap[egg.status] || statusBadgeMap.pending;
 
       const candlingTimeLabel = m.msToCandling > 0 
-        ? `Faltan ${this.formatDuration(m.msToCandling)}`
+        ? `Faltan ${this.formatDuration(m.msToCandling)}` 
         : `¡Listo para ovoscopia! (${this.formatDate(m.candlingDate)})`;
 
-      const hatchTimeLabel = m.msToHatch > 0
-        ? `Faltan ${this.formatDuration(m.msToHatch)}`
-        : `¡Día de eclosión! (${this.formatDate(m.hatchDate)})`;
+      const hatchTimeLabel = m.msToHatch > 0 
+        ? `Faltan ${this.formatDuration(m.msToHatch)}` 
+        : `¡Periodo cumplido! (${this.formatDate(m.hatchDate)})`;
 
       return `
-        <div class="glass-card p-4 flex flex-col justify-between gap-3 relative" id="card-${egg.id}">
+        <div class="glass-card p-4 sm:p-5 flex flex-col gap-4 border-theme hover:border-accent/40 transition-all relative group" id="card-${egg.id}">
+          
+          <!-- Encabezado de la Tarjeta -->
           <div class="flex items-start justify-between gap-2">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg ${isFertile ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-accent/15 text-accent border border-accent/30'}">
-                ${isHatched ? '🐣' : (isFertile ? '💓' : '🥚')}
+              <div class="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center text-accent font-display font-bold text-base shrink-0">
+                #${egg.number || 1}
               </div>
               <div>
                 <h3 class="font-display font-bold text-base text-main leading-tight">${this.escapeHtml(egg.name)}</h3>
-                <div class="font-label-caps text-[11px] text-muted">Puesta: ${this.formatDate(new Date(egg.layDate))}</div>
+                <p class="text-xs text-muted font-label-caps mt-0.5">Puesta: ${this.formatDate(new Date(egg.layDate))}</p>
               </div>
             </div>
-            <div class="status-pill ${egg.status}">
-              ${statusLabels[egg.status] || egg.status}
-            </div>
+
+            <span class="px-2.5 py-1 rounded-md text-[10px] font-label-caps font-bold border ${badge.class} shrink-0">
+              ${badge.label}
+            </span>
           </div>
 
-          <!-- Barra de progreso -->
-          <div class="bg-input/40 p-3 rounded-xl border border-theme flex flex-col gap-2">
-            <div class="flex justify-between items-center text-xs font-label-caps">
-              <span class="text-accent font-bold font-data">
-                ${m.elapsedDaysFloat < 1 ? `Día 0 (${Math.floor(m.elapsedMs / MS_PER_HOUR)}h transcurridas)` : `Día ${m.elapsedDaysFloat.toFixed(1)} / 21`}
-              </span>
-              <span class="text-muted font-data">${m.progressPct.toFixed(0)}%</span>
+          <!-- Barra de Progreso de 21 Días -->
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-xs font-label-caps">
+              <span class="text-muted">Desarrollo:</span>
+              <span class="font-data font-bold text-accent">DÍA ${m.currentDay} DE 21 (${m.progressPct.toFixed(0)}%)</span>
             </div>
-            <div class="progress-rail">
-              <div class="progress-bar-glow" style="width: ${m.progressPct}%"></div>
-            </div>
-            <div class="flex justify-between text-[10px] font-label-caps text-muted">
-              <span class="${m.currentDay >= 0 ? 'text-accent font-bold' : ''}">Puesta</span>
-              <span class="${m.currentDay >= CANDLING_DAY ? 'text-accent font-bold' : ''}">Día 5 (Miraje)</span>
-              <span class="${m.currentDay >= INTERNAL_PIP_DAY ? 'text-accent font-bold' : ''}">Día 18 (Picaje)</span>
-              <span class="${m.currentDay >= 21 ? 'text-accent font-bold' : ''}">Día 21 (Nace)</span>
+            <div class="w-full h-2.5 rounded-full bg-input border border-theme overflow-hidden p-0.5">
+              <div class="h-full rounded-full bg-gradient-to-r from-accent to-emerald-400 transition-all duration-500" style="width: ${m.progressPct}%;"></div>
             </div>
           </div>
 
@@ -384,7 +594,7 @@ class EggTrackerApp {
 
             <div class="flex items-center justify-between p-2 rounded-lg bg-input/30 border border-theme">
               <span class="text-muted flex items-center gap-1">
-                <span class="material-symbols-outlined text-[16px] text-accent">pest_control_rodent</span>
+                <span class="material-symbols-outlined text-[16px] text-emerald-400">pest_control_rodent</span>
                 <span>Eclosión (Día 21):</span>
               </span>
               <span class="font-data font-bold text-main" data-hatch-for="${egg.id}">${hatchTimeLabel}</span>
@@ -393,21 +603,32 @@ class EggTrackerApp {
 
           ${egg.notes ? `<p class="text-xs text-muted/80 italic px-1 font-body">"${this.escapeHtml(egg.notes)}"</p>` : ''}
 
-          <!-- Acciones de la Tarjeta -->
+          <!-- Acciones de la Tarjeta (Diferenciadas por Rol) -->
           <div class="flex items-center gap-2 pt-2 border-t border-theme">
-            <button class="btn-primary flex-1 py-2 px-3 rounded-xl text-xs font-label-caps tracking-wider flex items-center justify-center gap-1" onclick="app.openVisualizerForEgg('${egg.id}')">
+            <!-- Botón de desarrollo (abierto a todos) -->
+            <button class="btn-primary flex-1 py-2 px-3 rounded-xl text-xs font-label-caps tracking-wider flex items-center justify-center gap-1 shadow-sm" onclick="app.openVisualizerForEgg('${egg.id}')">
               <span class="material-symbols-outlined text-[16px]">biotech</span>
-              <span>DESARROLLO</span>
+              <span>VER DÍA ${m.currentDay}</span>
             </button>
-            <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps" onclick="app.openChangeStatusModal('${egg.id}')" title="Cambiar estado">
-              <span class="material-symbols-outlined text-[16px]">tune</span>
-            </button>
-            <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps" onclick="app.downloadIcsForEgg('${egg.id}')" title="Descargar recordatorios a calendario">
+
+            <!-- Botón de descarga de recordatorio individual (abierto a todos) -->
+            <button class="btn-secondary py-2 px-3 rounded-xl text-xs font-label-caps flex items-center gap-1 text-accent border-accent/30 hover:border-accent hover:bg-accent/10" onclick="app.downloadIcsForEgg('${egg.id}')" title="Descargar recordatorios a tu calendario (.ics)">
               <span class="material-symbols-outlined text-[16px]">calendar_add_on</span>
+              <span class="hidden sm:inline">RECORDATORIO</span>
             </button>
-            <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps" onclick="app.openEditEggModal('${egg.id}')" title="Editar huevo">
-              <span class="material-symbols-outlined text-[16px]">edit</span>
-            </button>
+
+            ${this.isAdmin ? `
+              <!-- Acciones exclusivas del Administrador -->
+              <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps text-amber-400 hover:bg-amber-500/10" onclick="app.openChangeStatusModal('${egg.id}')" title="Cambiar estado de fertilidad">
+                <span class="material-symbols-outlined text-[16px]">tune</span>
+              </button>
+              <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps" onclick="app.openEditEggModal('${egg.id}')" title="Editar huevo">
+                <span class="material-symbols-outlined text-[16px]">edit</span>
+              </button>
+              <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps text-red-400 hover:bg-red-500/10 hover:border-red-500/40" onclick="app.deleteEgg('${egg.id}')" title="Eliminar huevo">
+                <span class="material-symbols-outlined text-[16px]">delete</span>
+              </button>
+            ` : ''}
           </div>
         </div>
       `;
@@ -429,29 +650,32 @@ class EggTrackerApp {
 
       const hatchEl = document.querySelector(`[data-hatch-for="${egg.id}"]`);
       if (hatchEl) {
-        hatchEl.textContent = m.msToHatch > 0
+        hatchEl.textContent = m.msToHatch > 0 
           ? `Faltan ${this.formatDuration(m.msToHatch)}`
-          : `¡Día de eclosión! (${this.formatDate(m.hatchDate)})`;
+          : `¡Periodo cumplido! (${this.formatDate(m.hatchDate)})`;
       }
     });
 
-    // Actualizar estimador del siguiente huevo
-    const countdownEl = document.getElementById('next-egg-timer');
-    if (countdownEl && this.eggs.length > 0) {
-      const sortedEggs = [...this.eggs].sort((a, b) => new Date(b.layDate) - new Date(a.layDate));
-      const latestEgg = sortedEggs[0];
-      const nextExpectedLayTime = new Date(latestEgg.layDate).getTime() + (EGG_INTERVAL_HOURS * MS_PER_HOUR);
-      const msToNext = nextExpectedLayTime - Date.now();
-      if (msToNext > 0) {
-        countdownEl.textContent = `Faltan aprox. ${this.formatDuration(msToNext)}`;
-      } else {
-        countdownEl.textContent = `¡Listo para poner! (Han pasado +48h)`;
+    // Actualizar timer del próximo huevo
+    if (this.eggs.length > 0) {
+      const sorted = [...this.eggs].sort((a, b) => new Date(a.layDate) - new Date(b.layDate));
+      const lastEgg = sorted[sorted.length - 1];
+      const lastLayTime = new Date(lastEgg.layDate).getTime();
+      const nextLayTargetMs = lastLayTime + (EGG_INTERVAL_HOURS * MS_PER_HOUR);
+      const msRemaining = nextLayTargetMs - Date.now();
+      const timerEl = document.getElementById('next-egg-timer');
+      if (timerEl) {
+        if (msRemaining > 0) {
+          timerEl.textContent = `Faltan ~${this.formatDuration(msRemaining)}`;
+        } else {
+          timerEl.textContent = `¡Ventana de puesta abierta! (hace ${this.formatDuration(Math.abs(msRemaining))})`;
+        }
       }
     }
   }
 
   // =========================================================================
-  // Visor de Desarrollo de Polluelo
+  // Integración con el Visor de Embrión
   // =========================================================================
 
   openVisualizerForEgg(eggId) {
@@ -460,28 +684,27 @@ class EggTrackerApp {
 
     this.activeEggForVisualizer = egg;
     const m = this.getEggMetrics(egg);
-    const day = Math.min(21, Math.max(0, m.currentDay));
+    const day = m.currentDay;
 
     const modalTitle = document.getElementById('dev-modal-title');
     if (modalTitle) {
-      modalTitle.textContent = `Desarrollo Embrionario: ${egg.name}`;
+      modalTitle.textContent = `Desarrollo: ${egg.name} (Día ${day})`;
     }
 
-    const daySlider = document.getElementById('dev-day-slider');
-    if (daySlider) {
-      daySlider.value = day;
-    }
-
-    this.setVisualizerDay(day);
     if (typeof showView === 'function') {
       showView('embryo');
     }
+
+    const slider = document.getElementById('dev-day-slider');
+    if (slider) slider.value = day;
+
+    this.setVisualizerDay(day);
   }
 
   setVisualizerDay(day) {
-    const sliderValLabel = document.getElementById('slider-day-val');
-    if (sliderValLabel) {
-      sliderValLabel.textContent = `DÍA ${day}`;
+    const dayLabel = document.getElementById('slider-day-val');
+    if (dayLabel) {
+      dayLabel.textContent = `DÍA ${day}`;
     }
 
     if (this.visualizer) {
@@ -492,7 +715,15 @@ class EggTrackerApp {
   }
 
   updateVisualizerBio(day) {
-    const stage = EMBRYO_STAGES[day] || EMBRYO_STAGES[0];
+    const stage = (typeof EMBRYO_STAGES !== 'undefined' && EMBRYO_STAGES[day]) ? EMBRYO_STAGES[day] : {
+      title: "Desarrollo de Ninfa",
+      shortDesc: "Etapa de incubación",
+      detailedDesc: "Evolución embrionaria de Nymphicus hollandicus.",
+      candlingDesc: "Observación al trasluz.",
+      chickAnatomy: "Anatomía en desarrollo.",
+      airCell: "4 mm",
+      temperatureTip: "Mantener parámetros de incubación estables."
+    };
     const container = document.getElementById('stage-bio-details');
     if (!container) return;
 
@@ -539,10 +770,15 @@ class EggTrackerApp {
   }
 
   // =========================================================================
-  // Formularios de Huevos (Crear, Editar, Cambiar Estado)
+  // Formularios de Huevos (Solo Administrador)
   // =========================================================================
 
   openAddEggModal() {
+    if (!this.isAdmin) {
+      this.openAdminLoginModal();
+      return;
+    }
+
     this.activeEggForEdit = null;
     const modalTitle = document.getElementById('egg-form-modal-title');
     if (modalTitle) modalTitle.textContent = `Registrar Nuevo Huevo`;
@@ -550,9 +786,7 @@ class EggTrackerApp {
     const nextNumber = this.eggs.length + 1;
     document.getElementById('form-egg-name').value = `Huevo #${nextNumber} de Impa`;
     
-    // Poner fecha y hora actual local
     this.setFormDateTime(new Date());
-
     document.getElementById('form-egg-status').value = 'pending';
     document.getElementById('form-egg-notes').value = '';
 
@@ -560,6 +794,11 @@ class EggTrackerApp {
   }
 
   openEditEggModal(eggId) {
+    if (!this.isAdmin) {
+      this.openAdminLoginModal();
+      return;
+    }
+
     const egg = this.eggs.find(e => e.id === eggId);
     if (!egg) return;
 
@@ -579,7 +818,6 @@ class EggTrackerApp {
     const input = document.getElementById('form-egg-date');
     if (!input) return;
 
-    // Formatear a YYYY-MM-DDTHH:mm para input datetime-local
     const year = dateObj.getFullYear();
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     const day = String(dateObj.getDate()).padStart(2, '0');
@@ -589,6 +827,8 @@ class EggTrackerApp {
   }
 
   handleEggFormSubmit() {
+    if (!this.isAdmin) return;
+
     const name = document.getElementById('form-egg-name').value.trim() || 'Huevo sin nombre';
     const dateVal = document.getElementById('form-egg-date').value;
     const status = document.getElementById('form-egg-status').value;
@@ -602,13 +842,12 @@ class EggTrackerApp {
     const layDate = new Date(dateVal).toISOString();
 
     if (this.activeEggForEdit) {
-      // Edición
       this.activeEggForEdit.name = name;
       this.activeEggForEdit.layDate = layDate;
       this.activeEggForEdit.status = status;
       this.activeEggForEdit.notes = notes;
+      this.showToast(`Registro de ${name} actualizado.`);
     } else {
-      // Nuevo huevo
       const newEgg = {
         id: 'egg_' + Date.now(),
         number: this.eggs.length + 1,
@@ -618,6 +857,7 @@ class EggTrackerApp {
         notes
       };
       this.eggs.push(newEgg);
+      this.showToast(`¡${name} registrado con éxito!`);
     }
 
     this.saveData();
@@ -626,16 +866,17 @@ class EggTrackerApp {
   }
 
   openChangeStatusModal(eggId) {
+    if (!this.isAdmin) return;
+
     const egg = this.eggs.find(e => e.id === eggId);
     if (!egg) return;
 
-    const currentStatus = egg.status;
     const newStatus = prompt(
       `Cambiar estado para ${egg.name}:\n\n` +
       `1: Pendiente de ovoscopia (pending)\n` +
       `2: Fértil confirmado (fertile)\n` +
       `3: No fértil / Claro (infertile)\n` +
-      `4: Detenido / Muerte temprana (failed)\n` +
+      `4: Detenido / Malogrado (failed)\n` +
       `5: ¡Eclosionado! (hatched)\n\n` +
       `Escribe el número del nuevo estado (1-5):`
     );
@@ -652,109 +893,228 @@ class EggTrackerApp {
       egg.status = statusMap[newStatus.trim()];
       this.saveData();
       this.render();
+      this.showToast(`Estado de ${egg.name} actualizado a: ${egg.status}`);
     }
   }
 
   deleteEgg(eggId) {
+    if (!this.isAdmin) return;
+
     const egg = this.eggs.find(e => e.id === eggId);
     if (!egg) return;
     if (confirm(`¿Estás seguro de eliminar el registro de ${egg.name}?`)) {
       this.eggs = this.eggs.filter(e => e.id !== eggId);
       this.saveData();
       this.render();
+      this.showToast(`Registro de ${egg.name} eliminado.`, 'delete');
     }
   }
 
   // =========================================================================
-  // Exportación de Calendario iCal (.ics)
+  // Exportación de Calendario iCal (.ics) para Visitantes y Dueño
   // =========================================================================
+
+  formatIcsDate(d) {
+    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  }
 
   downloadIcsForEgg(eggId) {
     const egg = this.eggs.find(e => e.id === eggId);
     if (!egg) return;
 
     const m = this.getEggMetrics(egg);
-    const formatIcsDate = (d) => {
-      return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    };
+    const candlingStart = this.formatIcsDate(m.candlingDate);
+    const candlingEnd = this.formatIcsDate(new Date(m.candlingDate.getTime() + MS_PER_HOUR));
 
-    const candlingStart = formatIcsDate(m.candlingDate);
-    const candlingEnd = formatIcsDate(new Date(m.candlingDate.getTime() + MS_PER_HOUR));
+    const pipStart = this.formatIcsDate(m.pipDate);
+    const pipEnd = this.formatIcsDate(new Date(m.pipDate.getTime() + MS_PER_HOUR));
 
-    const pipStart = formatIcsDate(m.pipDate);
-    const pipEnd = formatIcsDate(new Date(m.pipDate.getTime() + MS_PER_HOUR));
+    const hatchStart = this.formatIcsDate(m.hatchDate);
+    const hatchEnd = this.formatIcsDate(new Date(m.hatchDate.getTime() + MS_PER_HOUR));
 
-    const hatchStart = formatIcsDate(m.hatchDate);
-    const hatchEnd = formatIcsDate(new Date(m.hatchDate.getTime() + MS_PER_HOUR));
+    const nowIcs = this.formatIcsDate(new Date());
 
     const icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Nido de Impa//Incubation Tracker//ES',
+      'PRODID:-//Nido de Impa//Nymphicus hollandicus Tracker//ES',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       
       // Evento 1: Ovoscopia Día 5
       'BEGIN:VEVENT',
       `UID:candling-${egg.id}@impa-tracker`,
-      `DTSTAMP:${formatIcsDate(new Date())}`,
+      `DTSTAMP:${nowIcs}`,
       `DTSTART:${candlingStart}`,
       `DTEND:${candlingEnd}`,
       `SUMMARY:🔦 Miraje / Ovoscopia: ${egg.name} (Ninfa Impa)`,
       `DESCRIPTION:Día 5 de incubación de Nymphicus hollandicus. Revisar en habitación oscura con linterna LED si se aprecian vasos sanguíneos y latido cardíaco.`,
       'STATUS:CONFIRMED',
+      'BEGIN:VALARM',
+      'TRIGGER:-PT2H',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:Recordatorio ovoscopia',
+      'END:VALARM',
       'END:VEVENT',
 
       // Evento 2: Picaje interno Día 18
       'BEGIN:VEVENT',
       `UID:pip-${egg.id}@impa-tracker`,
-      `DTSTAMP:${formatIcsDate(new Date())}`,
+      `DTSTAMP:${nowIcs}`,
       `DTSTART:${pipStart}`,
       `DTEND:${pipEnd}`,
       `SUMMARY:💧 Subir Humedad nido (Día 18): ${egg.name}`,
-      `DESCRIPTION:Día 18. El pichón de ninfa inicia el picaje interno de la cámara de aire. Elevar la humedad del nido al 65%-75% para facilitar la rotura de la cáscara.`,
+      `DESCRIPTION:Día 18. El pichón de ninfa inicia el picaje interno de la cámara de aire. Elevar la humedad del nido al 65%-75% para ablandar la cáscara.`,
       'STATUS:CONFIRMED',
+      'BEGIN:VALARM',
+      'TRIGGER:-PT4H',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:Recordatorio humedad nido',
+      'END:VALARM',
       'END:VEVENT',
 
       // Evento 3: Eclosión Día 21
       'BEGIN:VEVENT',
       `UID:hatch-${egg.id}@impa-tracker`,
-      `DTSTAMP:${formatIcsDate(new Date())}`,
+      `DTSTAMP:${nowIcs}`,
       `DTSTART:${hatchStart}`,
       `DTEND:${hatchEnd}`,
       `SUMMARY:🐣 ¡Día de Eclosión! Nacimiento: ${egg.name}`,
       `DESCRIPTION:Día 21 de incubación. Nacimiento estimado del pichón de Impa. Preparar alimento fresco para los padres (pasta de cría, mixtura y agua limpia).`,
       'STATUS:CONFIRMED',
+      'BEGIN:VALARM',
+      'TRIGGER:-PT2H',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:Recordatorio eclosión',
+      'END:VALARM',
       'END:VEVENT',
 
       'END:VCALENDAR'
     ].join('\r\n');
 
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `Recordatorios_Incubacion_${egg.name.replace(/\s+/g, '_')}.ics`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    this.triggerFileDownload(icsContent, `Recordatorio_Incubacion_${egg.name.replace(/\s+/g, '_')}.ics`, 'text/calendar;charset=utf-8;');
+    this.showToast(`Recordatorios para ${egg.name} descargados.`, 'calendar_month');
+  }
+
+  downloadAllEggsIcs() {
+    if (this.eggs.length === 0) {
+      alert('No hay huevos registrados para generar recordatorios.');
+      return;
+    }
+
+    const nowIcs = this.formatIcsDate(new Date());
+    const events = [];
+
+    this.eggs.forEach(egg => {
+      const m = this.getEggMetrics(egg);
+      const candlingStart = this.formatIcsDate(m.candlingDate);
+      const candlingEnd = this.formatIcsDate(new Date(m.candlingDate.getTime() + MS_PER_HOUR));
+
+      const pipStart = this.formatIcsDate(m.pipDate);
+      const pipEnd = this.formatIcsDate(new Date(m.pipDate.getTime() + MS_PER_HOUR));
+
+      const hatchStart = this.formatIcsDate(m.hatchDate);
+      const hatchEnd = this.formatIcsDate(new Date(m.hatchDate.getTime() + MS_PER_HOUR));
+
+      events.push(
+        'BEGIN:VEVENT',
+        `UID:candling-${egg.id}@impa-tracker`,
+        `DTSTAMP:${nowIcs}`,
+        `DTSTART:${candlingStart}`,
+        `DTEND:${candlingEnd}`,
+        `SUMMARY:🔦 Miraje / Ovoscopia: ${egg.name} (Ninfa Impa)`,
+        `DESCRIPTION:Día 5 de incubación. Confirmar fertilidad al trasluz con linterna LED.`,
+        'STATUS:CONFIRMED',
+        'END:VEVENT',
+
+        'BEGIN:VEVENT',
+        `UID:pip-${egg.id}@impa-tracker`,
+        `DTSTAMP:${nowIcs}`,
+        `DTSTART:${pipStart}`,
+        `DTEND:${pipEnd}`,
+        `SUMMARY:💧 Subir Humedad (Día 18): ${egg.name}`,
+        `DESCRIPTION:Día 18. Picaje interno del pichón de Impa. Elevar humedad al 65%-75%.`,
+        'STATUS:CONFIRMED',
+        'END:VEVENT',
+
+        'BEGIN:VEVENT',
+        `UID:hatch-${egg.id}@impa-tracker`,
+        `DTSTAMP:${nowIcs}`,
+        `DTSTART:${hatchStart}`,
+        `DTEND:${hatchEnd}`,
+        `SUMMARY:🐣 ¡Eclosión estimada!: ${egg.name}`,
+        `DESCRIPTION:Día 21. Nacimiento del pichón de Ninfa Carolina de Impa.`,
+        'STATUS:CONFIRMED',
+        'END:VEVENT'
+      );
+    });
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Nido de Impa//Nidada Completa//ES',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      ...events,
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    this.triggerFileDownload(icsContent, `Recordatorios_Nidada_Impa_Completa.ics`, 'text/calendar;charset=utf-8;');
+    this.showToast('¡Todos los recordatorios de la nidada descargados!', 'calendar_month');
   }
 
   // =========================================================================
-  // Respaldo de Datos (JSON)
+  // Publicación Canónica y Respaldos (nest.json)
   // =========================================================================
+
+  openPublishModal() {
+    if (!this.isAdmin) return;
+    const countEl = document.getElementById('publish-eggs-count');
+    if (countEl) countEl.textContent = this.eggs.length;
+    this.openModal('modal-publish-nest');
+  }
+
+  getCanonicalNestJsonString() {
+    const payload = {
+      updatedAt: new Date().toISOString(),
+      species: "Nymphicus hollandicus",
+      mother: "Impa",
+      eggs: this.eggs
+    };
+    return JSON.stringify(payload, null, 2);
+  }
+
+  downloadCanonicalNestJson() {
+    const jsonStr = this.getCanonicalNestJsonString();
+    this.triggerFileDownload(jsonStr, 'nest.json', 'application/json');
+    this.showToast('Archivo data/nest.json descargado con éxito.', 'cloud_download');
+  }
+
+  copyNestJsonToClipboard() {
+    const jsonStr = this.getCanonicalNestJsonString();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(jsonStr).then(() => {
+        const lbl = document.getElementById('btn-copy-nest-label');
+        if (lbl) lbl.textContent = '¡COPIADO AL PORTAPAPELES!';
+        setTimeout(() => {
+          if (lbl) lbl.textContent = 'COPIAR JSON';
+        }, 2500);
+        this.showToast('Contenido JSON copiado al portapapeles.', 'content_copy');
+      });
+    } else {
+      prompt('Copia el contenido JSON:', jsonStr);
+    }
+  }
 
   exportBackup() {
     const dataStr = JSON.stringify(this.eggs, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `Respaldo_Nidada_Impa_${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    this.triggerFileDownload(dataStr, `Respaldo_Nidada_Impa_${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
+    this.showToast('Copia de respaldo JSON exportada.');
   }
 
   importBackup(event) {
+    if (!this.isAdmin) return;
+
     const file = event.target.files[0];
     if (!file) return;
 
@@ -762,11 +1122,12 @@ class EggTrackerApp {
     reader.onload = (e) => {
       try {
         const imported = JSON.parse(e.target.result);
-        if (Array.isArray(imported)) {
-          this.eggs = imported;
+        const eggsList = Array.isArray(imported) ? imported : (imported.eggs && Array.isArray(imported.eggs) ? imported.eggs : null);
+        if (eggsList) {
+          this.eggs = eggsList;
           this.saveData();
           this.render();
-          alert('¡Datos de la nidada importados correctamente!');
+          this.showToast('¡Datos de la nidada importados correctamente!');
         } else {
           alert('El archivo no tiene el formato esperado.');
         }
@@ -777,7 +1138,38 @@ class EggTrackerApp {
     reader.readAsText(file);
   }
 
-  // Modales
+  triggerFileDownload(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  // =========================================================================
+  // Notificaciones Toast y Modales
+  // =========================================================================
+
+  showToast(message, icon = 'check_circle') {
+    const toast = document.getElementById('toast-container');
+    const msgEl = document.getElementById('toast-message');
+    const iconEl = document.getElementById('toast-icon');
+
+    if (!toast || !msgEl) return;
+
+    msgEl.textContent = message;
+    if (iconEl) iconEl.textContent = icon;
+
+    toast.classList.add('show');
+    if (this._toastTimeout) clearTimeout(this._toastTimeout);
+    this._toastTimeout = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3500);
+  }
+
   openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -796,7 +1188,7 @@ class EggTrackerApp {
 
   escapeHtml(str) {
     if (!str) return '';
-    return str
+    return String(str)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")

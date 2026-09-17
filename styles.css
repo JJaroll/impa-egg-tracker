@@ -369,3 +369,33 @@ input[type=range].ui-range::-webkit-slider-thumb {
     box-shadow: 0 0 10px var(--accent-light);
     border: 2px solid var(--text-main);
 }
+
+/* Animación de error de PIN */
+@keyframes shake-horizontal {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+}
+
+.shake-input {
+    animation: shake-horizontal 0.4s ease-in-out;
+    border-color: #ef4444 !important;
+}
+
+/* Notificación flotante Toast */
+.toast-alert {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+
+.toast-alert.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
