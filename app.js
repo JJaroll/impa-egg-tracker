@@ -301,11 +301,11 @@ class EggTrackerApp {
 
     if (this.eggs.length === 0) {
       grid.innerHTML = `
-        <div class="empty-clutch-state">
-          <div class="empty-icon">🪺</div>
-          <h3>Aún no hay huevos registrados en la nidada</h3>
-          <p>Presiona el botón superior para registrar el primer huevo de Impa y comenzar a monitorear su desarrollo.</p>
-          <button class="btn btn-primary" onclick="app.openAddEggModal()">+ Registrar Primer Huevo</button>
+        <div class="glass-card p-8 flex flex-col items-center justify-center text-center col-span-full border-dashed">
+          <div class="text-4xl mb-2">🪺</div>
+          <h3 class="font-display font-bold text-lg text-main mb-1">Aún no hay huevos en la nidada</h3>
+          <p class="text-xs text-muted max-w-sm mb-4 font-label-caps">Registra el primer huevo de Impa para activar el monitor de incubación y ovoscopia.</p>
+          <button class="btn-primary px-4 py-2 rounded-xl text-xs font-label-caps" onclick="app.openAddEggModal()">+ REGISTRAR PRIMER HUEVO</button>
         </div>
       `;
       return;
@@ -323,8 +323,8 @@ class EggTrackerApp {
       const statusLabels = {
         pending: '🥚 Pendiente Ovoscopia',
         fertile: '💓 Fértil Confirmado',
-        infertile: '⚪ Huevo Claro / Infértil',
-        failed: '⚠️ Desarrollo Detenido',
+        infertile: '⚪ Infértil / Claro',
+        failed: '⚠️ Detenido',
         hatched: '🐣 ¡Eclosionado!'
       };
 
@@ -334,72 +334,79 @@ class EggTrackerApp {
 
       const hatchTimeLabel = m.msToHatch > 0
         ? `Faltan ${this.formatDuration(m.msToHatch)}`
-        : `¡Día de eclosión alcanzado! (${this.formatDate(m.hatchDate)})`;
+        : `¡Día de eclosión! (${this.formatDate(m.hatchDate)})`;
 
       return `
-        <div class="egg-card" id="card-${egg.id}">
-          <div class="egg-card-header">
-            <div class="egg-identity">
-              <div class="egg-icon-pill ${isFertile ? 'fertile-glow' : ''}">
+        <div class="glass-card p-4 flex flex-col justify-between gap-3 relative" id="card-${egg.id}">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg ${isFertile ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-accent/15 text-accent border border-accent/30'}">
                 ${isHatched ? '🐣' : (isFertile ? '💓' : '🥚')}
               </div>
-              <div class="egg-title-box">
-                <h3>${this.escapeHtml(egg.name)}</h3>
-                <div class="egg-lay-date">Puesta: ${this.formatDate(new Date(egg.layDate))}</div>
+              <div>
+                <h3 class="font-display font-bold text-base text-main leading-tight">${this.escapeHtml(egg.name)}</h3>
+                <div class="font-label-caps text-[11px] text-muted">Puesta: ${this.formatDate(new Date(egg.layDate))}</div>
               </div>
             </div>
-            <div class="status-badge ${egg.status}">
+            <div class="status-pill ${egg.status}">
               ${statusLabels[egg.status] || egg.status}
             </div>
           </div>
 
-          <!-- Barra de Progreso de Incubación -->
-          <div class="incubation-progress-block">
-            <div class="progress-header">
-              <span class="day-counter">
-                ${m.elapsedDaysFloat < 1 ? `Día 0 (${Math.floor(m.elapsedMs / MS_PER_HOUR)}h transcurridas)` : `Día ${m.elapsedDaysFloat.toFixed(1)} de 21`}
+          <!-- Barra de progreso -->
+          <div class="bg-input/40 p-3 rounded-xl border border-theme flex flex-col gap-2">
+            <div class="flex justify-between items-center text-xs font-label-caps">
+              <span class="text-accent font-bold font-data">
+                ${m.elapsedDaysFloat < 1 ? `Día 0 (${Math.floor(m.elapsedMs / MS_PER_HOUR)}h transcurridas)` : `Día ${m.elapsedDaysFloat.toFixed(1)} / 21`}
               </span>
-              <span class="pct">${m.progressPct.toFixed(0)}%</span>
+              <span class="text-muted font-data">${m.progressPct.toFixed(0)}%</span>
             </div>
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill" style="width: ${m.progressPct}%"></div>
+            <div class="progress-rail">
+              <div class="progress-bar-glow" style="width: ${m.progressPct}%"></div>
             </div>
-            <div class="progress-milestones">
-              <span class="${m.currentDay >= 0 ? 'active' : ''}">Puesta</span>
-              <span class="${m.currentDay >= CANDLING_DAY ? 'active' : ''}">Día 5 (Miraje)</span>
-              <span class="${m.currentDay >= INTERNAL_PIP_DAY ? 'active' : ''}">Día 18 (Picaje)</span>
-              <span class="${m.currentDay >= 21 ? 'active' : ''}">Día 21 (Nace)</span>
-            </div>
-          </div>
-
-          <!-- Cuentas Regresivas Críticas -->
-          <div class="milestones-box">
-            <div class="milestone-row ${m.msToCandling > 0 && m.currentDay < CANDLING_DAY ? 'highlight' : ''}">
-              <span class="milestone-label">🔦 Ovoscopia (Día 5):</span>
-              <span class="milestone-time" data-candling-for="${egg.id}">${candlingTimeLabel}</span>
-            </div>
-
-            <div class="milestone-row ${m.msToHatch > 0 && m.currentDay >= 17 ? 'hatch-highlight' : ''}">
-              <span class="milestone-label">🐣 Eclosión (Día 21):</span>
-              <span class="milestone-time" data-hatch-for="${egg.id}">${hatchTimeLabel}</span>
+            <div class="flex justify-between text-[10px] font-label-caps text-muted">
+              <span class="${m.currentDay >= 0 ? 'text-accent font-bold' : ''}">Puesta</span>
+              <span class="${m.currentDay >= CANDLING_DAY ? 'text-accent font-bold' : ''}">Día 5 (Miraje)</span>
+              <span class="${m.currentDay >= INTERNAL_PIP_DAY ? 'text-accent font-bold' : ''}">Día 18 (Picaje)</span>
+              <span class="${m.currentDay >= 21 ? 'text-accent font-bold' : ''}">Día 21 (Nace)</span>
             </div>
           </div>
 
-          ${egg.notes ? `<p style="font-size:0.8rem; color:var(--text-dim); margin-bottom:1rem; font-style:italic;">"${this.escapeHtml(egg.notes)}"</p>` : ''}
+          <!-- Hitos Clave -->
+          <div class="flex flex-col gap-1.5 text-xs font-label-caps">
+            <div class="flex items-center justify-between p-2 rounded-lg bg-input/30 border border-theme">
+              <span class="text-muted flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-amber-400">flashlight_on</span>
+                <span>Ovoscopia (Día 5):</span>
+              </span>
+              <span class="font-data font-bold text-main" data-candling-for="${egg.id}">${candlingTimeLabel}</span>
+            </div>
 
-          <!-- Acciones -->
-          <div class="egg-card-actions">
-            <button class="btn btn-primary btn-sm" onclick="app.openVisualizerForEgg('${egg.id}')">
-              🔬 Ver Desarrollo
+            <div class="flex items-center justify-between p-2 rounded-lg bg-input/30 border border-theme">
+              <span class="text-muted flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px] text-accent">pest_control_rodent</span>
+                <span>Eclosión (Día 21):</span>
+              </span>
+              <span class="font-data font-bold text-main" data-hatch-for="${egg.id}">${hatchTimeLabel}</span>
+            </div>
+          </div>
+
+          ${egg.notes ? `<p class="text-xs text-muted/80 italic px-1 font-body">"${this.escapeHtml(egg.notes)}"</p>` : ''}
+
+          <!-- Acciones de la Tarjeta -->
+          <div class="flex items-center gap-2 pt-2 border-t border-theme">
+            <button class="btn-primary flex-1 py-2 px-3 rounded-xl text-xs font-label-caps tracking-wider flex items-center justify-center gap-1" onclick="app.openVisualizerForEgg('${egg.id}')">
+              <span class="material-symbols-outlined text-[16px]">biotech</span>
+              <span>DESARROLLO</span>
             </button>
-            <button class="btn btn-secondary btn-sm" onclick="app.openChangeStatusModal('${egg.id}')">
-              ⚙️ Estado
+            <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps" onclick="app.openChangeStatusModal('${egg.id}')" title="Cambiar estado">
+              <span class="material-symbols-outlined text-[16px]">tune</span>
             </button>
-            <button class="btn btn-ghost btn-sm" title="Descargar recordatorios a calendario" onclick="app.downloadIcsForEgg('${egg.id}')">
-              📅 Calendario
+            <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps" onclick="app.downloadIcsForEgg('${egg.id}')" title="Descargar recordatorios a calendario">
+              <span class="material-symbols-outlined text-[16px]">calendar_add_on</span>
             </button>
-            <button class="btn btn-ghost btn-sm" title="Editar huevo" onclick="app.openEditEggModal('${egg.id}')">
-              ✏️
+            <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps" onclick="app.openEditEggModal('${egg.id}')" title="Editar huevo">
+              <span class="material-symbols-outlined text-[16px]">edit</span>
             </button>
           </div>
         </div>
@@ -466,13 +473,15 @@ class EggTrackerApp {
     }
 
     this.setVisualizerDay(day);
-    this.openModal('embryo-visualizer-modal');
+    if (typeof showView === 'function') {
+      showView('embryo');
+    }
   }
 
   setVisualizerDay(day) {
     const sliderValLabel = document.getElementById('slider-day-val');
     if (sliderValLabel) {
-      sliderValLabel.textContent = `Día ${day}`;
+      sliderValLabel.textContent = `DÍA ${day}`;
     }
 
     if (this.visualizer) {
@@ -488,33 +497,43 @@ class EggTrackerApp {
     if (!container) return;
 
     container.innerHTML = `
-      <div class="stage-bio-card">
-        <div class="stage-bio-header">
-          <h2>${stage.title}</h2>
-          <p>${stage.shortDesc}</p>
+      <div class="glass-card p-4 flex flex-col gap-3">
+        <div>
+          <span class="font-label-caps text-[10px] text-accent tracking-widest uppercase font-bold">ETAPA BIOLÓGICA • DÍA ${day}</span>
+          <h3 class="font-display font-bold text-lg text-main leading-snug">${stage.title}</h3>
+          <p class="text-xs text-accent font-medium mt-0.5">${stage.shortDesc}</p>
         </div>
 
-        <div class="bio-section-box">
-          <h4>🔬 ¿Qué se observa en Ovoscopia?</h4>
-          <p>${stage.candlingDesc}</p>
+        <div class="bg-input/40 p-3 rounded-xl border border-theme flex flex-col gap-1">
+          <div class="flex items-center gap-1.5 text-accent font-label-caps text-[11px] font-bold">
+            <span class="material-symbols-outlined text-[16px]">flashlight_on</span>
+            <span>¿QUÉ SE OBSERVA EN OVOSCOPIA?</span>
+          </div>
+          <p class="text-xs text-main leading-relaxed">${stage.candlingDesc}</p>
         </div>
 
-        <div class="bio-section-box">
-          <h4>🐥 Anatomía y Desarrollo del Embrión</h4>
-          <p>${stage.chickAnatomy}</p>
-          <div style="margin-top:0.5rem; font-size:0.8rem; color:var(--accent-amber);">
-            <strong>Cámara de aire:</strong> ${stage.airCell}
+        <div class="bg-input/40 p-3 rounded-xl border border-theme flex flex-col gap-1">
+          <div class="flex items-center gap-1.5 text-sky-400 font-label-caps text-[11px] font-bold">
+            <span class="material-symbols-outlined text-[16px]">biotech</span>
+            <span>ANATOMÍA DEL POLLUELO</span>
+          </div>
+          <p class="text-xs text-main leading-relaxed">${stage.chickAnatomy}</p>
+          <div class="mt-1 text-[11px] font-label-caps text-muted">
+            <span class="text-accent font-bold">Cámara de aire:</span> ${stage.airCell}
           </div>
         </div>
 
-        <div class="bio-tips-box">
-          <h4>💡 Consejo de Manejo y Nido</h4>
-          <p>${stage.temperatureTip}</p>
+        <div class="bg-accent/10 p-3 rounded-xl border border-accent/20 flex flex-col gap-1">
+          <div class="flex items-center gap-1.5 text-accent font-label-caps text-[11px] font-bold">
+            <span class="material-symbols-outlined text-[16px]">lightbulb</span>
+            <span>MANEJO Y NIDO</span>
+          </div>
+          <p class="text-xs text-main leading-relaxed">${stage.temperatureTip}</p>
         </div>
 
-        <div style="margin-top:0.5rem; font-size:0.8rem; color:var(--text-dim); line-height:1.4;">
+        <p class="text-[11px] text-muted leading-normal px-1 font-body">
           ${stage.detailedDesc}
-        </div>
+        </p>
       </div>
     `;
   }
@@ -761,12 +780,18 @@ class EggTrackerApp {
   // Modales
   openModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) modal.classList.add('active');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
   }
 
   closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) modal.classList.remove('active');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
   }
 
   escapeHtml(str) {
