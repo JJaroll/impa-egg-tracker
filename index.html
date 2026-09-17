@@ -757,6 +757,8 @@
     function t(key) {
       const dict = I18N[currentLang] || I18N.es;
       return dict[key] !== undefined ? dict[key] : (I18N.es[key] !== undefined ? I18N.es[key] : key);
+    }
+
     // Inicializar preferencias guardadas
     (function initTheme() {
       const theme = localStorage.getItem('ui_theme') || 'dark';

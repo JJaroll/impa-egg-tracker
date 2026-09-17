@@ -57,18 +57,39 @@ body {
 /* =========================================================
    NAVEGACIÓN LATERAL (Sidebar estilo "Click-Wheel")
    ========================================================= */
+.nav-item {
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
 .nav-item-active {
     background: var(--accent-light) !important;
     color: var(--accent) !important;
 }
+.nav-item-active svg {
+    stroke: var(--accent) !important;
+}
+.nav-item-active span {
+    color: var(--accent) !important;
+}
+
 .nav-item-inactive {
-    color: rgba(26, 27, 32, 0.45) !important;
+    color: #4B5563 !important; /* Contraste perfecto y legible sobre sidebar #F5F6F8 */
 }
-[data-theme="dark"] .nav-item-inactive {
-    color: rgba(255, 255, 255, 0.45) !important;
+.nav-item-inactive svg {
+    stroke: #4B5563 !important;
 }
-.nav-item:hover {
-    background: rgba(0, 0, 0, 0.05);
+.nav-item-inactive span {
+    color: #4B5563 !important;
+}
+.nav-item-inactive:hover {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: #111827 !important;
+}
+.nav-item-inactive:hover svg {
+    stroke: #111827 !important;
+}
+.nav-item-inactive:hover span {
+    color: #111827 !important;
 }
 
 /* =========================================================
