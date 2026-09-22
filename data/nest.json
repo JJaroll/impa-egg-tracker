@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-21T10:34:47.688Z",
+  "updatedAt": "2026-09-22T20:41:54.090Z",
   "species": "Nymphicus hollandicus",
   "mother": "Impa",
   "adminPinHash": "4597da85b54b0215a8b5d536291aab6f1fb48952dd97698ee26a2fab58b8cdec",
@@ -9,7 +9,7 @@
       "number": 1,
       "name": "Huevo #1 de Impa",
       "layDate": "2026-09-17T13:32:00.000Z",
-      "status": "pending",
+      "status": "fertile",
       "notes": "Primer huevo de la nidada de Impa."
     },
     {
@@ -17,7 +17,7 @@
       "number": 2,
       "name": "Huevo #2 de Impa",
       "layDate": "2026-09-19T08:26:00.000Z",
-      "status": "pending",
+      "status": "fertile",
       "notes": "Huevo puesto en la madrugada durante la incubación nocturna."
     },
     {
