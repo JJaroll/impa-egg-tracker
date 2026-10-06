@@ -55,10 +55,12 @@
     }
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=20260917-3">
+  <link rel="stylesheet" href="styles.css?v=20261006-photo">
   <style>
     .view.hidden, .view:not(.active) { display: none !important; }
-    .view.active { display: flex !important; }
+    .view.active { display: flex !important; flex-direction: column; overflow-x: hidden !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+    .glass-card { min-width: 0; max-width: 100%; }
+    #eggs-grid, #chicks-list-grid, #chick-visualizer-container { width: 100% !important; max-width: 100% !important; min-width: 0 !important; overflow-x: hidden; }
 
     /* =========================================================
        NAVEGACIÓN LATERAL DESKTOP (Sidebar fijo #F5F6F8)

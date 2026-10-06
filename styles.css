@@ -324,6 +324,10 @@ body {
    ========================================================= */
 .view {
     display: none !important;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 .view.active {
@@ -331,6 +335,28 @@ body {
     flex-direction: column;
     flex: 1 1 0%;
     min-height: 0;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Blindaje contra desbordes en grids, tarjetas y visualizador */
+#eggs-grid, #chicks-list-grid, #chick-visualizer-container, #chicks-sec-diag, #chicks-sec-list, #chicks-sec-guides {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden;
+}
+
+#eggs-grid > *, #chicks-list-grid > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.glass-card {
+    min-width: 0;
+    max-width: 100%;
 }
 
 /* =========================================================

@@ -731,6 +731,23 @@ const CHICK_STAGES = [
   }
 ];
 
+// Asignación de imágenes reales de alta fidelidad desde el Día 8 de nacido
+CHICK_STAGES.forEach(stage => {
+  if (stage.day >= 8 && stage.day <= 14) {
+    stage.realImage = 'assets/chick-day8-quills.jpg';
+    stage.imageCaption = 'Fotografía real: Pichón de ninfa con ojos abiertos y cañones de cresta y alas emergiendo sobre viruta de pino.';
+  } else if (stage.day >= 15 && stage.day <= 21) {
+    stage.realImage = 'assets/chick-day15-porcupine.jpg';
+    stage.imageCaption = 'Fotografía real: Fase erizo en su plenitud, cañones desvainando en pincel amarillo y mejilla naranja brotando.';
+  } else if (stage.day >= 22 && stage.day <= 26) {
+    stage.realImage = 'assets/chick-day22-feathered.jpg';
+    stage.imageCaption = 'Fotografía real: Pichón en alimentación a mano con alas perladas desvainadas y cresta amarilla abierta.';
+  } else if (stage.day >= 27 && stage.day <= 30) {
+    stage.realImage = 'assets/chick-day28-fledgling.jpg';
+    stage.imageCaption = 'Fotografía real: Ninfa juvenil plumaje completo perlado con espiga de panizo (primer mes de vida).';
+  }
+});
+
 // Curva de peso estándar saludable (Día 0 a 30)
 const CHICK_GROWTH_CURVE = [
   { day: 0, weight: 4.5 },

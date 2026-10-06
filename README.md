@@ -44,8 +44,14 @@ Nueva sección principal **POLLOS** dedicada al crecimiento y cuidados de los pi
   - Parámetros biológicos diarios según la edad exacta: temperatura, modo y frecuencia de alimentación, capacidad del buche.
   - Estado del anillado: advertencia visual activa durante la ventana crítica (Días 6 a 8 con anilla reglamentaria de 4.5 mm).
   - Registro de pesajes diarios con comparativa frente al rango promedio saludable (*Healthy Weight Range*).
-- **Esquema Interactivo Día 0 a 30**:
-  - Selector de días (0 al 30) con 6 fases morfológicas detalladas en SVG vectorial (Neonato, Primera semana/Anillado, Ojos y cañones, Fase erizo/desvainado, Emplume con cresta, Fledgling de 1 mes).
+- **Esquema Interactivo Día 0 a 30 con Fotografías Reales**:
+  - **Fotografías Reales desde el Día 8**: A partir del día 8 de nacido, el visualizador despliega fotografías reales fotorrealistas de alta fidelidad para cada fase morfológica:
+    - *Días 8 a 14*: Apertura ocular y cañones de cresta/alas despuntando en nido (`assets/chick-day8-quills.jpg`).
+    - *Días 15 a 21*: Fase erizo con cañones abriéndose en pincel y mejilla anaranjada (`assets/chick-day15-porcupine.jpg`).
+    - *Días 22 a 26*: Empapillado a mano con plumaje perlado desplegado y cresta amarilla (`assets/chick-day22-feathered.jpg`).
+    - *Días 27 a 30*: Volantón juvenil de primer mes con plumaje completo junto a espiga de panizo (`assets/chick-day28-fledgling.jpg`).
+  - **Conmutador Rápido**: Selector interactivo para alternar entre `[ 📷 FOTOGRAFÍA REAL ]` y `[ 🔬 ESQUEMA SVG ]`.
+  - Selector de días (0 al 30) protegido contra desbordes con diseño adaptable en todas las pantallas.
   - Indicador claro de crianza natural con padres vs empapillado a mano en cada día.
   - Gráfico interactivo SVG de **Curva de Crecimiento** que contrasta la curva de peso estándar de *Nymphicus hollandicus* contra los pesajes reales ingresados por el dueño.
 - **Guías Críticas de Crianza**:

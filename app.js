@@ -747,48 +747,56 @@ class EggTrackerApp {
 
           ${egg.notes ? `<p class="text-xs text-muted/80 italic px-1 font-body">"${this.escapeHtml(egg.notes)}"</p>` : ''}
 
-          <!-- Acciones de la Tarjeta (Diferenciadas por Rol) -->
-          <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 pt-2 border-t border-theme">
-            <!-- Botón de desarrollo (abierto a todos) -->
-            <button class="btn-primary flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps tracking-wider flex items-center justify-center gap-1 shadow-sm min-w-[100px]" onclick="app.openVisualizerForEgg('${egg.id}')">
-              <span class="material-symbols-outlined text-[16px]">biotech</span>
-              <span>VER DÍA ${m.currentDay}</span>
-            </button>
-
-            ${isHatched ? `
-              <!-- Botón Ver Pollo (si ya eclosionó) -->
-              <button class="btn-secondary py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps flex items-center justify-center gap-1 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10 shrink-0" onclick="app.focusChick('${egg.id}')" title="Ver seguimiento y crecimiento de este pollo">
-                <span class="text-sm">🐥</span>
-                <span>VER POLLO</span>
+          <!-- Acciones de la Tarjeta (Diferenciadas por Rol y protegidas contra desbordes) -->
+          <div class="flex flex-col gap-2 pt-2 border-t border-theme w-full min-w-0">
+            <!-- Fila Superior: Botones Principales -->
+            <div class="flex items-center gap-1.5 sm:gap-2 w-full min-w-0">
+              <!-- Botón de desarrollo (abierto a todos) -->
+              <button class="btn-primary flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps tracking-wider flex items-center justify-center gap-1.5 shadow-sm min-w-0 truncate" onclick="app.openVisualizerForEgg('${egg.id}')">
+                <span class="material-symbols-outlined text-[16px] shrink-0">biotech</span>
+                <span class="truncate">VER DÍA ${m.currentDay}</span>
               </button>
-            ` : ''}
 
-            <!-- Botón de descarga de recordatorio individual (abierto a todos) -->
-            <button class="btn-secondary py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps flex items-center justify-center gap-1 text-accent border-accent/30 hover:border-accent hover:bg-accent/10 shrink-0" onclick="app.downloadIcsForEgg('${egg.id}')" title="Descargar recordatorios a tu calendario (.ics)">
-              <span class="material-symbols-outlined text-[16px]">calendar_add_on</span>
-              <span class="hidden sm:inline">RECORDATORIO</span>
-            </button>
-
-            ${this.isAdmin ? `
-              ${!isHatched ? `
-                <!-- Botón ¡Eclosionó! directo para Administrador -->
-                <button class="btn-secondary py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/15 flex items-center gap-1 shrink-0" onclick="app.openHatchModal('${egg.id}')" title="Registrar que este huevo ya eclosionó">
-                  <span class="text-sm leading-none">🐣</span>
-                  <span>¡ECLOSIONÓ!</span>
+              ${isHatched ? `
+                <!-- Botón Ver Pollo (si ya eclosionó) -->
+                <button class="btn-secondary py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps flex items-center justify-center gap-1 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10 shrink-0" onclick="app.focusChick('${egg.id}')" title="Ver seguimiento y crecimiento de este pollo">
+                  <span class="text-sm shrink-0">🐥</span>
+                  <span>VER POLLO</span>
                 </button>
               ` : ''}
 
-              <!-- Acciones exclusivas del Administrador -->
-              <button class="btn-secondary py-2 px-2 sm:px-2.5 rounded-xl text-xs font-label-caps text-amber-400 hover:bg-amber-500/10" onclick="app.openChangeStatusModal('${egg.id}')" title="Cambiar estado de fertilidad">
-                <span class="material-symbols-outlined text-[16px]">tune</span>
+              ${!isHatched && this.isAdmin ? `
+                <!-- Botón ¡Eclosionó! directo para Administrador -->
+                <button class="btn-secondary py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/15 flex items-center gap-1 shrink-0 shadow-sm" onclick="app.openHatchModal('${egg.id}')" title="Registrar que este huevo ya eclosionó">
+                  <span class="text-sm leading-none shrink-0">🐣</span>
+                  <span>¡ECLOSIONÓ!</span>
+                </button>
+              ` : ''}
+            </div>
+
+            <!-- Fila Inferior: Recordatorio y Herramientas de Gestión -->
+            <div class="flex items-center justify-between gap-1.5 w-full min-w-0 pt-0.5">
+              <!-- Botón de descarga de recordatorio individual (abierto a todos) -->
+              <button class="btn-secondary py-1.5 px-2.5 rounded-lg text-[11px] font-label-caps flex items-center gap-1 text-accent border-accent/30 hover:border-accent hover:bg-accent/10 min-w-0 shrink-0" onclick="app.downloadIcsForEgg('${egg.id}')" title="Descargar recordatorios a tu calendario (.ics)">
+                <span class="material-symbols-outlined text-[15px] shrink-0">calendar_add_on</span>
+                <span>RECORDATORIO</span>
               </button>
-              <button class="btn-secondary py-2 px-2 sm:px-2.5 rounded-xl text-xs font-label-caps" onclick="app.openEditEggModal('${egg.id}')" title="Editar huevo">
-                <span class="material-symbols-outlined text-[16px]">edit</span>
-              </button>
-              <button class="btn-secondary py-2 px-2 sm:px-2.5 rounded-xl text-xs font-label-caps text-red-400 hover:bg-red-500/10 hover:border-red-500/40" onclick="app.deleteEgg('${egg.id}')" title="Eliminar huevo">
-                <span class="material-symbols-outlined text-[16px]">delete</span>
-              </button>
-            ` : ''}
+
+              ${this.isAdmin ? `
+                <!-- Acciones exclusivas del Administrador -->
+                <div class="flex items-center gap-1 shrink-0 ml-auto">
+                  <button class="btn-secondary p-1.5 rounded-lg text-xs font-label-caps text-amber-400 hover:bg-amber-500/10 border-theme" onclick="app.openChangeStatusModal('${egg.id}')" title="Cambiar estado de fertilidad">
+                    <span class="material-symbols-outlined text-[15px]">tune</span>
+                  </button>
+                  <button class="btn-secondary p-1.5 rounded-lg text-xs font-label-caps text-muted hover:text-main hover:bg-input border-theme" onclick="app.openEditEggModal('${egg.id}')" title="Editar huevo">
+                    <span class="material-symbols-outlined text-[15px]">edit</span>
+                  </button>
+                  <button class="btn-secondary p-1.5 rounded-lg text-xs font-label-caps text-red-400 hover:bg-red-500/10 hover:border-red-500/40 border-theme" onclick="app.deleteEgg('${egg.id}')" title="Eliminar huevo">
+                    <span class="material-symbols-outlined text-[15px]">delete</span>
+                  </button>
+                </div>
+              ` : ''}
+            </div>
           </div>
         </div>
       `;

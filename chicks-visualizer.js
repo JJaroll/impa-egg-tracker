@@ -10,6 +10,7 @@ class ChickVisualizer {
     this.currentDay = 0;
     this.activeTab = 'morphology'; // 'morphology' | 'growth_chart'
     this.recordedWeights = []; // Puntos de peso reales de pollos registrados
+    this.viewMode = 'photo'; // 'photo' | 'svg' - desde día 8 por defecto fotografía real
   }
 
   setDay(day) {
@@ -19,6 +20,11 @@ class ChickVisualizer {
 
   setTab(tab) {
     this.activeTab = tab;
+    this.render();
+  }
+
+  toggleViewMode() {
+    this.viewMode = this.viewMode === 'photo' ? 'svg' : 'photo';
     this.render();
   }
 
@@ -43,13 +49,15 @@ class ChickVisualizer {
     };
 
     const isMorphology = this.activeTab === 'morphology';
+    const hasRealPhoto = Boolean(stage.realImage);
+    const showPhoto = isMorphology && hasRealPhoto && this.viewMode === 'photo';
 
     this.container.innerHTML = `
-      <div class="glass-card p-3 sm:p-5 flex flex-col gap-4 border-theme shadow-xl">
+      <div class="glass-card p-3 sm:p-5 flex flex-col gap-4 border-theme shadow-xl w-full max-w-full min-w-0 overflow-hidden">
         
         <!-- Barra de Controles Superiores: Selector de Modo & Salto a Hitos -->
-        <div class="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-theme">
-          <div class="flex items-center gap-1.5 sm:gap-2 bg-input/50 p-1 rounded-xl border border-theme">
+        <div class="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-theme w-full min-w-0">
+          <div class="flex items-center gap-1.5 sm:gap-2 bg-input/50 p-1 rounded-xl border border-theme min-w-0 flex-wrap">
             <button type="button" 
                     class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-label-caps font-bold transition-all ${isMorphology ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-main'}"
                     onclick="if(window.chickVis) window.chickVis.setTab('morphology')">
@@ -68,8 +76,8 @@ class ChickVisualizer {
             </button>
           </div>
 
-          <!-- Indicador de Día Actual -->
-          <div class="flex items-center gap-2">
+          <!-- Indicador de Día Actual y Controles Prev/Next -->
+          <div class="flex items-center gap-2 shrink-0">
             <button type="button" 
                     class="w-8 h-8 rounded-lg bg-input border border-theme flex items-center justify-center text-muted hover:text-main hover:border-accent disabled:opacity-30 disabled:pointer-events-none transition-all"
                     onclick="if(window.chickVis) window.chickVis.setDay(${day - 1})"
@@ -89,107 +97,109 @@ class ChickVisualizer {
         </div>
 
         <!-- Slider de Día y Botones Rápidos a Hitos Clave -->
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center justify-between text-xs font-label-caps">
-            <span class="text-muted font-bold">${stage.stage}</span>
-            <span class="text-accent font-data">${((day / 30) * 100).toFixed(0)}% del primer mes</span>
+        <div class="flex flex-col gap-2 w-full min-w-0">
+          <div class="flex items-center justify-between text-xs font-label-caps min-w-0">
+            <span class="text-muted font-bold truncate">${stage.stage}</span>
+            <span class="text-accent font-data shrink-0 ml-2">${((day / 30) * 100).toFixed(0)}% del primer mes</span>
           </div>
           
           <input type="range" min="0" max="30" value="${day}" step="1" 
                  class="w-full accent-accent cursor-pointer h-2 bg-input rounded-lg border border-theme" 
                  oninput="if(window.chickVis) window.chickVis.setDay(this.value)">
 
-          <!-- Píldoras de Acceso Rápido a Hitos -->
-          <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar py-1 text-[10px] sm:text-[11px] font-label-caps font-bold">
-            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(0)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 0 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+          <!-- Píldoras de Acceso Rápido a Hitos (con scroll horizontal limpio sin desborde) -->
+          <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar py-1 w-full min-w-0 text-[10px] sm:text-[11px] font-label-caps font-bold">
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(0)" class="px-2.5 py-1 rounded-lg border shrink-0 transition-all ${day === 0 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
               🐣 D0: Eclosión
             </button>
-            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(6)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 6 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(6)" class="px-2.5 py-1 rounded-lg border shrink-0 transition-all ${day === 6 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
               💍 D6: Anillado 4.5mm
             </button>
-            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(8)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 8 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
-              👀 D8: Ojos Abiertos
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(8)" class="px-2.5 py-1 rounded-lg border shrink-0 transition-all ${day === 8 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+              📷 D8: Ojos y Cañones
             </button>
-            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(15)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 15 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
-              🦔 D15: Fase Erizo
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(15)" class="px-2.5 py-1 rounded-lg border shrink-0 transition-all ${day === 15 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+              📷 D15: Fase Erizo
             </button>
-            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(20)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 20 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(20)" class="px-2.5 py-1 rounded-lg border shrink-0 transition-all ${day === 20 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
               🏡 D20: Fin Padres
             </button>
-            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(21)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 21 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(21)" class="px-2.5 py-1 rounded-lg border shrink-0 transition-all ${day === 21 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
               🥣 D21: ¡Inicio Papilla!
             </button>
-            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(26)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 26 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(26)" class="px-2.5 py-1 rounded-lg border shrink-0 transition-all ${day === 26 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
               🌾 D26: Destete
             </button>
-            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(30)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 30 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(30)" class="px-2.5 py-1 rounded-lg border shrink-0 transition-all ${day === 30 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
               ⭐ D30: 1er Mes
             </button>
           </div>
         </div>
 
-        <!-- Cuerpo Principal: Renderizador SVG (Morfología o Curva) -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        <!-- Cuerpo Principal: Renderizador (Fotografía Real / SVG / Curva) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start w-full max-w-full min-w-0">
           
-          <!-- Lienzo Gráfico SVG (7 columnas en desktop) -->
-          <div class="lg:col-span-7 flex flex-col gap-2">
-            <div class="w-full aspect-[4/3] sm:aspect-[16/10] rounded-2xl bg-gradient-to-b from-black/40 to-black/60 border border-theme relative overflow-hidden flex items-center justify-center p-3 shadow-inner">
-              ${isMorphology ? this.renderMorphologySvg(day) : this.renderGrowthChartSvg(day)}
+          <!-- Lienzo Gráfico (7 columnas en desktop) -->
+          <div class="lg:col-span-7 flex flex-col gap-2 w-full min-w-0">
+            <div class="w-full aspect-[4/3] sm:aspect-[16/10] rounded-2xl bg-gradient-to-b from-black/50 to-black/80 border border-theme relative overflow-hidden flex items-center justify-center p-2 sm:p-3 shadow-inner min-w-0">
+              ${isMorphology 
+                ? (showPhoto ? this.renderPhotoView(stage, day) : this.renderSvgViewWithToggle(stage, day, hasRealPhoto)) 
+                : this.renderGrowthChartSvg(day)}
             </div>
             
-            <div class="flex items-center justify-between text-[11px] text-muted font-label-caps px-1">
-              <span>Etapa: <strong class="text-main">${stage.stage.split(':')[0]}</strong></span>
-              <span>Esquema biológico de referencia: <em>Nymphicus hollandicus</em></span>
+            <div class="flex items-center justify-between text-[11px] text-muted font-label-caps px-1 min-w-0 flex-wrap gap-1">
+              <span class="truncate">Etapa: <strong class="text-main">${stage.stage.split(':')[0]}</strong></span>
+              <span class="text-right truncate">${showPhoto ? '📷 Fotografía real de referencia' : '🔬 Esquema anatómico'}</span>
             </div>
           </div>
 
           <!-- Ficha de Parámetros y Cuidados del Día (5 columnas en desktop) -->
-          <div class="lg:col-span-5 flex flex-col gap-3">
+          <div class="lg:col-span-5 flex flex-col gap-3 w-full min-w-0">
             
             <!-- Título, Modo de Crianza y Resumen -->
-            <div class="p-3.5 rounded-2xl bg-input/40 border border-theme flex flex-col gap-2">
-              <div class="flex items-center justify-between gap-2 flex-wrap">
-                <div class="flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full ${stage.rearingType === 'parents' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse"></span>
-                  <h3 class="font-display font-bold text-base sm:text-lg text-main">${stage.title}</h3>
+            <div class="p-3.5 rounded-2xl bg-input/40 border border-theme flex flex-col gap-2 w-full min-w-0">
+              <div class="flex items-center justify-between gap-2 flex-wrap min-w-0">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <span class="w-2.5 h-2.5 rounded-full ${stage.rearingType === 'parents' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse shrink-0"></span>
+                  <h3 class="font-display font-bold text-base sm:text-lg text-main break-words min-w-0 leading-snug">${stage.title}</h3>
                 </div>
                 <span class="px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-label-caps font-bold border ${stage.rearingType === 'parents' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} flex items-center gap-1.5 shrink-0 shadow-sm">
                   <span class="material-symbols-outlined text-[14px]">${stage.rearingType === 'parents' ? 'favorite' : 'restaurant'}</span>
                   <span>${stage.rearingLabel || (day < 21 ? '🐣 Crianza con Padres' : '🥣 Alimentación a Mano')}</span>
                 </span>
               </div>
-              <p class="text-xs text-muted leading-relaxed font-body">${stage.summary}</p>
+              <p class="text-xs text-muted leading-relaxed font-body break-words">${stage.summary}</p>
             </div>
 
             <!-- Métricas Clave del Día -->
-            <div class="grid grid-cols-2 gap-2 text-xs font-label-caps">
-              <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5">
-                <span class="text-muted text-[10px] flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[14px] text-amber-400">scale</span>
+            <div class="grid grid-cols-2 gap-2 text-xs font-label-caps w-full min-w-0">
+              <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5 min-w-0 overflow-hidden">
+                <span class="text-muted text-[10px] flex items-center gap-1 truncate">
+                  <span class="material-symbols-outlined text-[14px] text-amber-400 shrink-0">scale</span>
                   PESO ESPERADO
                 </span>
-                <span class="font-data font-bold text-sm text-main">~${stage.weightAvg}g <span class="text-[10px] text-muted">(${stage.weightMin}-${stage.weightMax}g)</span></span>
+                <span class="font-data font-bold text-sm text-main truncate">~${stage.weightAvg}g <span class="text-[10px] text-muted font-normal">(${stage.weightMin}-${stage.weightMax}g)</span></span>
               </div>
 
-              <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5">
-                <span class="text-muted text-[10px] flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[14px] text-red-400">thermostat</span>
-                  TEMPERATURA / ENTORNO
+              <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5 min-w-0 overflow-hidden">
+                <span class="text-muted text-[10px] flex items-center gap-1 truncate">
+                  <span class="material-symbols-outlined text-[14px] text-red-400 shrink-0">thermostat</span>
+                  TEMPERATURA
                 </span>
                 <span class="font-data font-bold text-xs text-main truncate" title="${stage.temperature}">${stage.temperature.split('(')[0].trim()}</span>
               </div>
 
-              <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5">
-                <span class="text-muted text-[10px] flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[14px] text-blue-400">hourglass_top</span>
+              <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5 min-w-0 overflow-hidden">
+                <span class="text-muted text-[10px] flex items-center gap-1 truncate">
+                  <span class="material-symbols-outlined text-[14px] text-blue-400 shrink-0">hourglass_top</span>
                   CAPACIDAD BUCHE
                 </span>
                 <span class="font-data font-bold text-xs text-main truncate">${stage.cropCapacity}</span>
               </div>
 
-              <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5">
-                <span class="text-muted text-[10px] flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[14px] text-emerald-400">restaurant</span>
+              <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5 min-w-0 overflow-hidden">
+                <span class="text-muted text-[10px] flex items-center gap-1 truncate">
+                  <span class="material-symbols-outlined text-[14px] text-emerald-400 shrink-0">restaurant</span>
                   ALIMENTACIÓN
                 </span>
                 <span class="font-data font-bold text-xs text-main truncate" title="${stage.feedingFrequency}">${day < 21 ? 'Embuche padres' : 'Papilla a mano'}</span>
@@ -197,31 +207,31 @@ class ChickVisualizer {
             </div>
 
             <!-- Hitos Biológicos Clave -->
-            <div class="p-3.5 rounded-2xl bg-input/30 border border-theme flex flex-col gap-2">
+            <div class="p-3.5 rounded-2xl bg-input/30 border border-theme flex flex-col gap-2 w-full min-w-0">
               <span class="font-label-caps text-[10px] tracking-wider text-accent font-bold uppercase">Hitos Biológicos Clave:</span>
               <ul class="flex flex-col gap-1 text-xs text-muted">
                 ${stage.milestones.map(m => `
-                  <li class="flex items-start gap-1.5">
+                  <li class="flex items-start gap-1.5 min-w-0">
                     <span class="text-emerald-400 shrink-0 font-bold">✓</span>
-                    <span class="font-body text-xs text-main/90 leading-tight">${m}</span>
+                    <span class="font-body text-xs text-main/90 leading-tight break-words min-w-0">${m}</span>
                   </li>
                 `).join('')}
               </ul>
             </div>
 
             <!-- Consejos y Advertencias -->
-            <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5">
+            <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 w-full min-w-0">
               <span class="material-symbols-outlined text-amber-400 text-[20px] shrink-0 mt-0.5">tips_and_updates</span>
-              <div class="flex flex-col gap-0.5 text-xs font-body">
+              <div class="flex flex-col gap-0.5 text-xs font-body min-w-0 flex-1">
                 <span class="font-bold text-amber-300 font-label-caps text-[10px] tracking-wider">${day < 21 ? 'CONSEJO DE CRIANZA (CON LOS PADRES)' : 'CONSEJO DE ALIMENTACIÓN A MANO'}</span>
-                <p class="text-main/90 text-xs leading-relaxed">${stage.careTips}</p>
+                <p class="text-main/90 text-xs leading-relaxed break-words">${stage.careTips}</p>
               </div>
             </div>
 
             ${stage.warning ? `
-              <div class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-2 text-xs font-body">
+              <div class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-2 text-xs font-body w-full min-w-0">
                 <span class="material-symbols-outlined text-red-400 text-[18px] shrink-0 mt-0.5">warning</span>
-                <p class="text-red-300 text-[11px] leading-tight">${stage.warning}</p>
+                <p class="text-red-300 text-[11px] leading-tight break-words flex-1">${stage.warning}</p>
               </div>
             ` : ''}
 
@@ -229,6 +239,63 @@ class ChickVisualizer {
 
         </div>
 
+      </div>
+    `;
+  }
+
+  /**
+   * Renderiza la vista de fotografía real de alta definición para el pollo
+   */
+  renderPhotoView(stage, day) {
+    return `
+      <div class="relative w-full h-full flex items-center justify-center overflow-hidden rounded-xl group bg-black/60 select-none">
+        <img src="${stage.realImage}" alt="${stage.title}" class="w-full h-full object-cover rounded-xl transition-transform duration-700 group-hover:scale-105" loading="eager">
+        
+        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/40 pointer-events-none rounded-xl"></div>
+        
+        <!-- Badge de Foto Real -->
+        <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/20 text-white text-[10px] font-label-caps font-bold shadow-lg">
+          <span class="material-symbols-outlined text-[14px] text-amber-400">photo_camera</span>
+          <span>FOTOGRAFÍA REAL • DÍA ${day}</span>
+        </div>
+
+        <!-- Botón para alternar a esquema anatómico vectorial -->
+        <button type="button" 
+                class="absolute top-2.5 right-2.5 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 hover:border-accent text-white text-[10px] font-label-caps font-bold transition-all shadow-lg" 
+                onclick="if(window.chickVis) window.chickVis.toggleViewMode()" 
+                title="Cambiar a esquema anatómico vectorial">
+          <span class="material-symbols-outlined text-[14px] text-accent">science</span>
+          <span class="hidden sm:inline">VER ESQUEMA SVG</span>
+          <span class="sm:hidden">SVG</span>
+        </button>
+
+        <!-- Epígrafe descriptivo de la fotografía -->
+        <div class="absolute bottom-2.5 left-2.5 right-2.5 px-3 py-1.5 rounded-lg bg-black/75 backdrop-blur-md border border-white/10 text-white text-[11px] font-body leading-snug flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+          <span class="truncate">${stage.imageCaption || stage.summary}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Renderiza el esquema anatómico vectorial con botón flotante si hay foto real disponible
+   */
+  renderSvgViewWithToggle(stage, day, hasRealPhoto) {
+    return `
+      <div class="relative w-full h-full flex items-center justify-center">
+        ${this.renderMorphologySvg(day)}
+        
+        ${hasRealPhoto ? `
+          <button type="button" 
+                  class="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 hover:border-accent text-white text-[10px] font-label-caps font-bold transition-all shadow-lg" 
+                  onclick="if(window.chickVis) window.chickVis.toggleViewMode()" 
+                  title="Ver fotografía real de la ninfa">
+            <span class="material-symbols-outlined text-[14px] text-amber-400">photo_camera</span>
+            <span class="hidden sm:inline">VER FOTO REAL</span>
+            <span class="sm:hidden">FOTO</span>
+          </button>
+        ` : ''}
       </div>
     `;
   }
