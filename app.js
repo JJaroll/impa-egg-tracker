@@ -989,8 +989,12 @@ class EggTrackerApp {
             </div>
           </div>
 
-          <div class="flex flex-col items-end gap-1 shrink-0">
-            <span class="px-2.5 py-1 rounded-md text-[10px] font-label-caps font-bold border ${ringBadgeClass}">
+          <div class="flex flex-col items-end gap-1.5 shrink-0">
+            <span class="px-2.5 py-1 rounded-md text-[10px] font-label-caps font-bold border ${day < 21 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} flex items-center gap-1">
+              <span class="material-symbols-outlined text-[13px]">${day < 21 ? 'favorite' : 'restaurant'}</span>
+              <span>${day < 21 ? `Crianza con Padres (Semana ${Math.floor(day / 7) + 1})` : 'Alimentación a Mano (Papilla)'}</span>
+            </span>
+            <span class="px-2.5 py-0.5 rounded-md text-[10px] font-label-caps font-bold border ${ringBadgeClass}">
               ${ringStatus}
             </span>
           </div>
@@ -1020,7 +1024,7 @@ class EggTrackerApp {
               <span class="material-symbols-outlined text-[16px] text-red-400">thermostat</span>
               <span>Temperatura Nido</span>
             </span>
-            <span class="font-data font-bold text-main text-xs sm:text-sm">${stage ? stage.temperature : '28°C'}</span>
+            <span class="font-data font-bold text-main text-xs sm:text-sm">${stage ? stage.temperature.split('(')[0].trim() : '28°C'}</span>
           </div>
 
           <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-1">
@@ -1028,7 +1032,9 @@ class EggTrackerApp {
               <span class="material-symbols-outlined text-[16px] text-amber-400">restaurant</span>
               <span>Alimentación</span>
             </span>
-            <span class="font-data font-bold text-main text-xs sm:text-sm">${stage ? stage.feedingFrequency : '3 tomas/día'}</span>
+            <span class="font-data font-bold text-main text-xs sm:text-sm truncate" title="${stage ? stage.feedingFrequency : ''}">
+              ${day < 21 ? 'Embuche padres (Nutrir a Impa)' : 'Papilla tibia con jeringa'}
+            </span>
           </div>
 
           <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-1">
@@ -1114,12 +1120,12 @@ class EggTrackerApp {
               <div class="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center text-accent text-xl shrink-0">
                 <span class="material-symbols-outlined text-[22px]">${guide.icon || 'info'}</span>
               </div>
-              <div>
+              <div class="min-w-0">
                 <h4 class="font-display font-bold text-sm sm:text-base text-main leading-snug">${this.escapeHtml(guide.title)}</h4>
-                <p class="text-[11px] text-accent font-label-caps mt-0.5">${this.escapeHtml(guide.window || 'Periodo crítico')}</p>
+                <p class="text-[11px] text-accent font-label-caps font-bold mt-0.5">${this.escapeHtml(guide.badge || guide.window || 'Periodo crítico')}</p>
               </div>
             </div>
-            <p class="text-xs text-muted leading-relaxed font-body">${this.escapeHtml(guide.description)}</p>
+            <p class="text-xs text-muted leading-relaxed font-body">${this.escapeHtml(guide.desc || guide.description || '')}</p>
             
             <div class="p-3 rounded-xl bg-input/40 border border-theme flex flex-col gap-1 text-xs">
               <span class="font-label-caps font-bold text-main text-[11px] flex items-center gap-1">

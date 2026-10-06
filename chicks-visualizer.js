@@ -113,14 +113,17 @@ class ChickVisualizer {
             <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(15)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 15 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
               🦔 D15: Fase Erizo
             </button>
-            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(21)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 21 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
-              🪶 D21: 3 Semanas
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(20)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 20 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+              🏡 D20: Fin Padres
             </button>
-            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(25)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 25 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
-              🌿 D25: Fuera del Nido
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(21)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 21 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+              🥣 D21: ¡Inicio Papilla!
+            </button>
+            <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(26)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 26 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
+              🌾 D26: Destete
             </button>
             <button type="button" onclick="if(window.chickVis) window.chickVis.setDay(30)" class="px-2 py-1 rounded-lg border shrink-0 transition-all ${day === 30 ? 'bg-accent/20 border-accent text-accent' : 'bg-input/40 border-theme text-muted hover:text-main'}">
-              ⭐ D30: 1er Mes de Vida
+              ⭐ D30: 1er Mes
             </button>
           </div>
         </div>
@@ -143,11 +146,17 @@ class ChickVisualizer {
           <!-- Ficha de Parámetros y Cuidados del Día (5 columnas en desktop) -->
           <div class="lg:col-span-5 flex flex-col gap-3">
             
-            <!-- Título y Resumen -->
-            <div class="p-3.5 rounded-2xl bg-input/40 border border-theme flex flex-col gap-1.5">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-accent animate-pulse"></span>
-                <h3 class="font-display font-bold text-base sm:text-lg text-main">${stage.title}</h3>
+            <!-- Título, Modo de Crianza y Resumen -->
+            <div class="p-3.5 rounded-2xl bg-input/40 border border-theme flex flex-col gap-2">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full ${stage.rearingType === 'parents' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse"></span>
+                  <h3 class="font-display font-bold text-base sm:text-lg text-main">${stage.title}</h3>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-label-caps font-bold border ${stage.rearingType === 'parents' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} flex items-center gap-1.5 shrink-0 shadow-sm">
+                  <span class="material-symbols-outlined text-[14px]">${stage.rearingType === 'parents' ? 'favorite' : 'restaurant'}</span>
+                  <span>${stage.rearingLabel || (day < 21 ? '🐣 Crianza con Padres' : '🥣 Alimentación a Mano')}</span>
+                </span>
               </div>
               <p class="text-xs text-muted leading-relaxed font-body">${stage.summary}</p>
             </div>
@@ -165,9 +174,9 @@ class ChickVisualizer {
               <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5">
                 <span class="text-muted text-[10px] flex items-center gap-1">
                   <span class="material-symbols-outlined text-[14px] text-red-400">thermostat</span>
-                  TEMPERATURA NIDO
+                  TEMPERATURA / ENTORNO
                 </span>
-                <span class="font-data font-bold text-sm text-main">${stage.temperature}</span>
+                <span class="font-data font-bold text-xs text-main truncate" title="${stage.temperature}">${stage.temperature.split('(')[0].trim()}</span>
               </div>
 
               <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5">
@@ -180,14 +189,14 @@ class ChickVisualizer {
 
               <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-0.5">
                 <span class="text-muted text-[10px] flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[14px] text-emerald-400">schedule</span>
-                  TOMAS RECOMENDADAS
+                  <span class="material-symbols-outlined text-[14px] text-emerald-400">restaurant</span>
+                  ALIMENTACIÓN
                 </span>
-                <span class="font-data font-bold text-xs text-main truncate">${stage.feedingFrequency.split('(')[0]}</span>
+                <span class="font-data font-bold text-xs text-main truncate" title="${stage.feedingFrequency}">${day < 21 ? 'Embuche padres' : 'Papilla a mano'}</span>
               </div>
             </div>
 
-            <!-- Hitos y Cuidados -->
+            <!-- Hitos Biológicos Clave -->
             <div class="p-3.5 rounded-2xl bg-input/30 border border-theme flex flex-col gap-2">
               <span class="font-label-caps text-[10px] tracking-wider text-accent font-bold uppercase">Hitos Biológicos Clave:</span>
               <ul class="flex flex-col gap-1 text-xs text-muted">
@@ -204,10 +213,17 @@ class ChickVisualizer {
             <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5">
               <span class="material-symbols-outlined text-amber-400 text-[20px] shrink-0 mt-0.5">tips_and_updates</span>
               <div class="flex flex-col gap-0.5 text-xs font-body">
-                <span class="font-bold text-amber-300 font-label-caps text-[10px] tracking-wider">CONSEJO DE CRIANZA</span>
+                <span class="font-bold text-amber-300 font-label-caps text-[10px] tracking-wider">${day < 21 ? 'CONSEJO DE CRIANZA (CON LOS PADRES)' : 'CONSEJO DE ALIMENTACIÓN A MANO'}</span>
                 <p class="text-main/90 text-xs leading-relaxed">${stage.careTips}</p>
               </div>
             </div>
+
+            ${stage.warning ? `
+              <div class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-2 text-xs font-body">
+                <span class="material-symbols-outlined text-red-400 text-[18px] shrink-0 mt-0.5">warning</span>
+                <p class="text-red-300 text-[11px] leading-tight">${stage.warning}</p>
+              </div>
+            ` : ''}
 
           </div>
 

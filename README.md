@@ -32,22 +32,29 @@ Desarrollada en HTML5 semántico, Vanilla CSS3 (sistema de diseño Cicada con mo
   - Creación inmediata de la ficha individual en el sistema de seguimiento de pollitos.
 - En huevos ya eclosionados, el botón conmuta a `[ 🐥 VER POLLO ]`, llevando al usuario directamente a la ficha del pichón.
 
-### 4. 🐥 Esquema y Seguimiento de Pollos (Día 0 al Mes de Vida)
-Nueva sección principal **POLLOS** dedicada al crecimiento y cuidados de los pichones nacidos:
+### 4. 🐥 Esquema y Seguimiento de Pollos (Protocolo de Crianza Mixta)
+Nueva sección principal **POLLOS** dedicada al crecimiento y cuidados de los pichones nacidos bajo el protocolo óptimo de bienestar aviario:
+- **Protocolo de Crianza**:
+  - **Semanas 1 a 3 (Días 0 al 20)**: **Crianza 100% Natural con los Padres**. Impa y su pareja incuban, aportan calor corporal (36.5°C) y regurgitan "leche de buche" inicial cargada de microbiota e inmunoglobulinas. El criador nutre a los padres con pasta de cría al huevo, brócoli y calcio, supervisa la cama del nido, previene patas de rana, anilla entre los Días 6 y 8, y registra pesos diarios matutinos.
+  - **Semana 4 en adelante (Días 21 al 30+)**: **Alimentación a Mano (Empapillado)**. Al cumplir 21 días (inicio de la 4ª semana), se retira al pichón a una fauna box limpia para alimentarlo con jeringa y papilla tibia (38.5°C - 39.5°C). Pichón con defensas de sus padres consolidadas y cañones desvainando, permitiendo un amansamiento y troquelado perfecto hacia el destete con panizo en rama y mixtura.
 - **Mis Pollitos (Fichas en Vivo)**:
   - Cronómetro de edad en tiempo real (`X días, Y horas`).
   - Barra de progreso del primer mes (0 a 30 días).
-  - Parámetros biológicos diarios según la edad exacta: temperatura del nido requerida, frecuencia y volumen de tomas, capacidad del buche.
-  - Estado del anillado: advertencia visual activa durante la ventana crítica (Días 6 a 8).
+  - Insignia dinámica de modo de crianza: *🐣 Crianza con Padres (Semanas 1-3)* vs *🥣 Alimentación a Mano (Semana 4+)*.
+  - Parámetros biológicos diarios según la edad exacta: temperatura, modo y frecuencia de alimentación, capacidad del buche.
+  - Estado del anillado: advertencia visual activa durante la ventana crítica (Días 6 a 8 con anilla reglamentaria de 4.5 mm).
   - Registro de pesajes diarios con comparativa frente al rango promedio saludable (*Healthy Weight Range*).
 - **Esquema Interactivo Día 0 a 30**:
   - Selector de días (0 al 30) con 6 fases morfológicas detalladas en SVG vectorial (Neonato, Primera semana/Anillado, Ojos y cañones, Fase erizo/desvainado, Emplume con cresta, Fledgling de 1 mes).
+  - Indicador claro de crianza natural con padres vs empapillado a mano en cada día.
   - Gráfico interactivo SVG de **Curva de Crecimiento** que contrasta la curva de peso estándar de *Nymphicus hollandicus* contra los pesajes reales ingresados por el dueño.
 - **Guías Críticas de Crianza**:
-  1. *Anillado Reglamentario*: Instrucciones paso a paso para anillas de 4.5 mm entre los días 6 y 8.
-  2. *Prevención de Patas de Rana (Splay Leg)*: Manejo de cama de viruta y corrección con esponja/anillas.
-  3. *Estasis de Buche (Buche Parado)*: Causas térmicas, papilla a 39°C y masaje de evacuación.
-  4. *Destete Natural*: Introducción de panizo en rama y transición gradual a mixtura/vegetales.
+  1. *Crianza Natural con Padres (Semanas 1 a 3)*: Microbiota materna, leche de buche, nutrición para Impa y supervisión.
+  2. *Alimentación a Mano y Empapillado (Semana 4 / Día 21+)*: Técnica de jeringa, preparación a 38.5-39.5°C y fauna box.
+  3. *Anillado Reglamentario (4.5 mm)*: Instrucciones paso a paso para anillado en nido entre los Días 6 y 8.
+  4. *Prevención de Patas de Rana (Splay Leg)*: Manejo de cama de viruta en nido y corrección temprana con esponja.
+  5. *Estasis de Buche (Buche Parado)*: Causas térmicas, papilla a 39°C y protocolo de auxilio con masaje.
+  6. *Destete Progresivo e Independencia*: Introducción de panizo en rama (D23-25), mixtura y autonomía de vuelo.
 
 ### 5. 👥 Separación de Roles: Modo Lectura vs Modo Dueño
 - **Modo Visitante (Solo Lectura por defecto)**:
