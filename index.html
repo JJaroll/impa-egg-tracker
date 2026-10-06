@@ -229,6 +229,10 @@
           </svg>
           <span class="font-label-caps text-[10px] md:text-[11px] font-bold tracking-wider leading-none" data-i18n="nav_embryo">EMBRIÓN</span>
         </button>
+        <button type="button" class="nav-item nav-item-inactive flex flex-col items-center py-3 rounded-2xl transition-all w-[68px] md:w-[82px] mx-auto text-center" data-view="chicks" onclick="showView('chicks')">
+          <span class="text-xl mb-1 shrink-0 leading-none">🐥</span>
+          <span class="font-label-caps text-[10px] md:text-[11px] font-bold tracking-wider leading-none" data-i18n="nav_chicks">POLLOS</span>
+        </button>
         <button type="button" class="nav-item nav-item-inactive flex flex-col items-center py-3 rounded-2xl transition-all w-[68px] md:w-[82px] mx-auto text-center" data-view="care" onclick="showView('care')">
           <svg class="w-6 h-6 mb-1.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
@@ -497,6 +501,55 @@
         </div>
       </div>
 
+      <!-- ============ VISTA 3: POLLOS (SEGUIMIENTO 0 A 30 DÍAS) ============ -->
+      <div id="view-chicks" class="view flex-col gap-3.5 sm:gap-4 overflow-y-auto custom-scrollbar flex-1 pr-1 pb-20 md:pb-6" style="display: none;">
+        
+        <!-- Barra de Subpestañas de Pollos -->
+        <section class="glass-card p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2 shrink-0 border-theme">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <button type="button" id="btn-chicks-tab-list" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-label-caps font-bold transition-all bg-accent text-white shadow-sm flex items-center gap-1.5" onclick="app.setChicksTab('list')">
+              <span class="text-sm">🐥</span>
+              <span>MIS POLLITOS</span>
+            </button>
+            <button type="button" id="btn-chicks-tab-diag" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-label-caps font-bold transition-all text-muted hover:text-main flex items-center gap-1.5" onclick="app.setChicksTab('diagram')">
+              <span class="material-symbols-outlined text-[16px]">biotech</span>
+              <span>ESQUEMA DÍA 0-30</span>
+            </button>
+            <button type="button" id="btn-chicks-tab-guides" class="px-3 sm:px-4 py-2 rounded-xl text-xs font-label-caps font-bold transition-all text-muted hover:text-main flex items-center gap-1.5" onclick="app.setChicksTab('guides')">
+              <span class="material-symbols-outlined text-[16px]">menu_book</span>
+              <span>GUÍA DE CRIANZA</span>
+            </button>
+          </div>
+
+          <div class="text-[11px] text-muted font-label-caps hidden sm:flex items-center gap-1.5 px-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>Desarrollo del pichón de ninfa (primer mes)</span>
+          </div>
+        </section>
+
+        <!-- SUB-SECCIÓN 1: Fichas de Pollitos Nacidos -->
+        <section id="chicks-sec-list" class="flex flex-col gap-3.5" style="display: flex;">
+          <div id="chicks-list-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            <!-- Inyectado dinámicamente por app.renderChicksView() -->
+          </div>
+        </section>
+
+        <!-- SUB-SECCIÓN 2: Esquema Interactivo Morfológico y Curva de Peso (0 - 30 Días) -->
+        <section id="chicks-sec-diag" class="flex flex-col gap-3.5" style="display: none;">
+          <div id="chick-visualizer-container">
+            <!-- Inyectado por ChickVisualizer -->
+          </div>
+        </section>
+
+        <!-- SUB-SECCIÓN 3: Guías Críticas de Crianza -->
+        <section id="chicks-sec-guides" class="flex flex-col gap-3.5" style="display: none;">
+          <div id="chicks-guides-content">
+            <!-- Inyectado por app.renderChicksGuides() -->
+          </div>
+        </section>
+
+      </div>
+
     </main>
 
     <!-- ============ BARRA DE NAVEGACIÓN MÓVIL (Inferior estilo Cicada) ============ -->
@@ -517,6 +570,10 @@
           <path d="M9 12a2 2 0 1 1-2-2c1 0 2 1 2 2z"/>
         </svg>
         <span data-i18n="nav_embryo">EMBRIÓN</span>
+      </button>
+      <button type="button" class="mobile-nav-btn" data-view="chicks" onclick="showView('chicks')">
+        <span class="text-xl mb-0.5 shrink-0 leading-none">🐥</span>
+        <span data-i18n="nav_chicks">POLLOS</span>
       </button>
       <button type="button" class="mobile-nav-btn" data-view="care" onclick="showView('care')">
         <svg class="w-6 h-6 mb-1 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -777,6 +834,175 @@
     </div>
   </div>
 
+  <!-- ======================================================================= -->
+  <!-- MODAL: Registrar Eclosión de Huevo (¡Eclosionó!)                        -->
+  <!-- ======================================================================= -->
+  <div id="modal-hatch-egg" class="hidden fixed inset-0 z-[110] items-center justify-center bg-black/70 backdrop-blur-md" onclick="if(event.target === this) app.closeModal('modal-hatch-egg')">
+    <div class="w-full max-w-md mx-3 sm:mx-4 p-4 sm:p-6 flex flex-col gap-4 max-h-[90dvh] overflow-y-auto custom-scrollbar rounded-2xl border border-emerald-500/40 bg-card shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xl text-emerald-400">
+            🐣
+          </div>
+          <div>
+            <h3 id="hatch-modal-egg-title" class="font-display font-bold text-base text-main truncate">Registrar Eclosión</h3>
+            <p class="text-[11px] text-muted font-label-caps">Nacimiento del pichón de ninfa</p>
+          </div>
+        </div>
+        <button type="button" onclick="app.closeModal('modal-hatch-egg')" class="material-symbols-outlined text-muted/60 hover:text-main">close</button>
+      </div>
+
+      <form id="form-hatch-egg" onsubmit="event.preventDefault(); app.confirmHatchEgg();" class="flex flex-col gap-3.5 mt-1">
+        <div>
+          <label for="form-hatch-name" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Nombre / Identificador del Pollo:</label>
+          <input type="text" id="form-hatch-name" class="ui-input w-full p-2.5 text-xs" required placeholder="Ej: Pollo #1 de Impa">
+        </div>
+
+        <div>
+          <label for="form-hatch-date" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Fecha y Hora Exacta de Eclosión:</label>
+          <input type="datetime-local" id="form-hatch-date" class="ui-input w-full p-2.5 text-xs" required>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label for="form-hatch-weight" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Peso al nacer (g):</label>
+            <input type="number" id="form-hatch-weight" step="0.1" min="3.0" max="8.0" class="ui-input w-full p-2.5 text-xs font-data font-bold" required value="4.5">
+            <span class="text-[10px] text-muted font-label-caps mt-0.5 block">Normal: 4.0g - 5.5g</span>
+          </div>
+          <div>
+            <label for="form-hatch-ring" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">N° de Anilla (4.5mm):</label>
+            <input type="text" id="form-hatch-ring" class="ui-input w-full p-2.5 text-xs font-data" placeholder="Opcional (Días 6-8)">
+          </div>
+        </div>
+
+        <div>
+          <label for="form-hatch-mutation" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Mutación / Variedad:</label>
+          <input type="text" id="form-hatch-mutation" class="ui-input w-full p-2.5 text-xs" value="Perlado (Hijo/a de Impa)">
+        </div>
+
+        <div>
+          <label for="form-hatch-notes" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Observaciones / Vitalidad:</label>
+          <textarea id="form-hatch-notes" class="ui-input w-full p-2 text-xs" rows="2" placeholder="Picaje, asistencia requerida, vigor, etc."></textarea>
+        </div>
+
+        <div class="flex gap-2 mt-1">
+          <button type="button" onclick="app.closeModal('modal-hatch-egg')" class="btn-secondary flex-1 py-2.5 rounded-xl font-label-caps text-xs">
+            CANCELAR
+          </button>
+          <button type="submit" class="btn-primary flex-1 py-2.5 rounded-xl font-label-caps text-xs flex items-center justify-center gap-1.5 shadow-md bg-emerald-600 hover:bg-emerald-500 text-white">
+            <span class="text-sm">🐣</span>
+            <span>CONFIRMAR NACIMIENTO</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: Registrar Pesaje Diario de Pollo                                 -->
+  <!-- ======================================================================= -->
+  <div id="modal-add-weight" class="hidden fixed inset-0 z-[110] items-center justify-center bg-black/70 backdrop-blur-md" onclick="if(event.target === this) app.closeModal('modal-add-weight')">
+    <div class="w-full max-w-sm mx-3 sm:mx-4 p-4 sm:p-6 flex flex-col gap-4 max-h-[90dvh] overflow-y-auto custom-scrollbar rounded-2xl border border-theme bg-card shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
+            <span class="material-symbols-outlined text-[20px]">scale</span>
+          </div>
+          <div>
+            <h3 id="add-weight-modal-title" class="font-display font-bold text-base text-main truncate">Registrar Pesaje</h3>
+            <p class="text-[11px] text-muted font-label-caps">Control diario de ganancia de peso</p>
+          </div>
+        </div>
+        <button type="button" onclick="app.closeModal('modal-add-weight')" class="material-symbols-outlined text-muted/60 hover:text-main">close</button>
+      </div>
+
+      <form id="form-add-chick-weight" onsubmit="event.preventDefault(); app.saveChickWeight();" class="flex flex-col gap-3.5 mt-1">
+        <div class="p-2.5 rounded-xl bg-input/40 border border-theme">
+          <p id="add-weight-expected-ref" class="text-xs text-accent font-data font-bold">Rango saludable esperado: Calculando...</p>
+          <p class="text-[10px] text-muted font-label-caps mt-0.5">Pesar siempre a la misma hora antes de la primera toma matinal.</p>
+        </div>
+
+        <div>
+          <label for="form-chick-weight-date" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Fecha y Hora:</label>
+          <input type="datetime-local" id="form-chick-weight-date" class="ui-input w-full p-2.5 text-xs" required>
+        </div>
+
+        <div>
+          <label for="form-chick-weight-val" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Peso Actual (Gramos):</label>
+          <input type="number" id="form-chick-weight-val" step="0.1" min="1.0" max="150.0" class="ui-input w-full p-3 text-lg font-data font-bold text-center text-accent rounded-xl" required placeholder="Ej: 14.2">
+        </div>
+
+        <div>
+          <label for="form-chick-weight-notes" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Nota Opcional:</label>
+          <input type="text" id="form-chick-weight-notes" class="ui-input w-full p-2 text-xs" placeholder="Ej: Buche completamente digerido, activo">
+        </div>
+
+        <div class="flex gap-2 mt-1">
+          <button type="button" onclick="app.closeModal('modal-add-weight')" class="btn-secondary flex-1 py-2.5 rounded-xl font-label-caps text-xs">
+            CANCELAR
+          </button>
+          <button type="submit" class="btn-primary flex-1 py-2.5 rounded-xl font-label-caps text-xs flex items-center justify-center gap-1.5 shadow-md">
+            <span class="material-symbols-outlined text-[16px]">save</span>
+            <span>GUARDAR PESO</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: Editar Ficha de Pollo                                            -->
+  <!-- ======================================================================= -->
+  <div id="modal-edit-chick" class="hidden fixed inset-0 z-[110] items-center justify-center bg-black/70 backdrop-blur-md" onclick="if(event.target === this) app.closeModal('modal-edit-chick')">
+    <div class="w-full max-w-md mx-3 sm:mx-4 p-4 sm:p-6 flex flex-col gap-4 max-h-[90dvh] overflow-y-auto custom-scrollbar rounded-2xl border border-theme bg-card shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
+            <span class="material-symbols-outlined text-[20px]">edit</span>
+          </div>
+          <div>
+            <h3 id="edit-chick-modal-title" class="font-display font-bold text-base text-main truncate">Editar Ficha de Pollo</h3>
+            <p class="text-[11px] text-muted font-label-caps">Información e identificación</p>
+          </div>
+        </div>
+        <button type="button" onclick="app.closeModal('modal-edit-chick')" class="material-symbols-outlined text-muted/60 hover:text-main">close</button>
+      </div>
+
+      <form id="form-edit-chick" onsubmit="event.preventDefault(); app.saveEditChick();" class="flex flex-col gap-3.5 mt-1">
+        <div>
+          <label for="form-edit-chick-name" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Nombre / Identificador:</label>
+          <input type="text" id="form-edit-chick-name" class="ui-input w-full p-2.5 text-xs" required>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label for="form-edit-chick-ring" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">N° de Anilla:</label>
+            <input type="text" id="form-edit-chick-ring" class="ui-input w-full p-2.5 text-xs font-data" placeholder="Ej: FOA-2026-042">
+          </div>
+          <div>
+            <label for="form-edit-chick-mutation" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Mutación:</label>
+            <input type="text" id="form-edit-chick-mutation" class="ui-input w-full p-2.5 text-xs" placeholder="Ej: Perlado / Ancestral">
+          </div>
+        </div>
+
+        <div>
+          <label for="form-edit-chick-notes" class="block text-[11px] font-label-caps text-muted uppercase font-bold mb-1">Notas / Observaciones:</label>
+          <textarea id="form-edit-chick-notes" class="ui-input w-full p-2 text-xs" rows="3"></textarea>
+        </div>
+
+        <div class="flex gap-2 mt-1">
+          <button type="button" onclick="app.closeModal('modal-edit-chick')" class="btn-secondary flex-1 py-2.5 rounded-xl font-label-caps text-xs">
+            CANCELAR
+          </button>
+          <button type="submit" class="btn-primary flex-1 py-2.5 rounded-xl font-label-caps text-xs flex items-center justify-center gap-1.5 shadow-md">
+            <span class="material-symbols-outlined text-[16px]">save</span>
+            <span>GUARDAR CAMBIOS</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Contenedor Flotante de Toast Notifications -->
   <div id="toast-container" class="toast-alert glass-card p-3 rounded-xl border border-theme shadow-2xl flex items-center gap-2.5 text-xs text-main">
     <span class="material-symbols-outlined text-[18px] text-accent" id="toast-icon">check_circle</span>
@@ -786,13 +1012,15 @@
   <!-- Scripts -->
   <script src="embryo-data.js"></script>
   <script src="embryo-visualizer.js"></script>
+  <script src="chicks-data.js"></script>
+  <script src="chicks-visualizer.js"></script>
   <script src="app.js"></script>
 
   <!-- Script del Sistema de Diseño Cicada (Navegación, Ajustes, i18n) -->
   <script>
     // Navegación entre vistas
     function showView(name) {
-      const views = ['dashboard', 'embryo', 'care'];
+      const views = ['dashboard', 'embryo', 'chicks', 'care'];
       views.forEach(v => {
         const el = document.getElementById('view-' + v);
         if (el) {
@@ -864,7 +1092,7 @@
     // i18n
     const I18N = {
       es: {
-        nav_dashboard: "NIDADA", nav_embryo: "EMBRIÓN", nav_care: "GUÍA",
+        nav_dashboard: "NIDADA", nav_embryo: "EMBRIÓN", nav_chicks: "POLLOS", nav_care: "GUÍA",
         settings_tooltip: "Ajustes", connection_tooltip: "Monitor en vivo", about_tooltip: "Sobre este proyecto",
         settings_title: "Ajustes", settings_language_title: "IDIOMA",
         settings_theme_title: "TEMA", settings_theme_dark: "Oscuro", settings_theme_light: "Claro",
@@ -877,7 +1105,7 @@
         about_title: "SOBRE EL PROYECTO"
       },
       en: {
-        nav_dashboard: "CLUTCH", nav_embryo: "EMBRYO", nav_care: "GUIDE",
+        nav_dashboard: "CLUTCH", nav_embryo: "EMBRYO", nav_chicks: "CHICKS", nav_care: "GUIDE",
         settings_tooltip: "Settings", connection_tooltip: "Live monitor", about_tooltip: "About this project",
         settings_title: "Settings", settings_language_title: "LANGUAGE",
         settings_theme_title: "THEME", settings_theme_dark: "Dark", settings_theme_light: "Light",

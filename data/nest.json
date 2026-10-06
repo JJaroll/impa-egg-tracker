@@ -3,6 +3,7 @@
   "species": "Nymphicus hollandicus",
   "mother": "Impa",
   "adminPinHash": "4597da85b54b0215a8b5d536291aab6f1fb48952dd97698ee26a2fab58b8cdec",
+  "clutchCompleted": false,
   "eggs": [
     {
       "id": "egg_1_impa",
@@ -44,5 +45,6 @@
       "status": "fertile",
       "notes": ""
     }
-  ]
+  ],
+  "chicks": []
 }

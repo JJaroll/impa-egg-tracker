@@ -17,9 +17,15 @@ const EGG_INTERVAL_HOURS = 48; // Intervalo típico entre puestas en ninfas
 class EggTrackerApp {
   constructor() {
     this.eggs = [];
-    this.visualizer = null;
+    this.chicks = [];
+    this.clutchCompleted = false; // true = parada de puesta / nidada cerrada
+    this.chicksTab = 'list'; // 'list' | 'diagram' | 'guides'
+    this.chickVisualizer = null;
     this.activeEggForVisualizer = null;
     this.activeEggForEdit = null;
+    this.activeEggForHatch = null;
+    this.activeChickForWeight = null;
+    this.activeChickForEdit = null;
 
     // Sistema de Roles: Modo Lectura (visitante) vs Modo Administrador (dueño de Impa)
     this.isAdmin = false;
@@ -39,6 +45,7 @@ class EggTrackerApp {
 
     // Inicializar componentes
     this.setupVisualizer();
+    this.setupChickVisualizer();
     this.bindEvents();
     this.updateRoleUI();
     this.render();
@@ -63,9 +70,14 @@ class EggTrackerApp {
     // Si es administrador y tiene datos guardados en su navegador, respetar su sesión local
     if (this.isAdmin) {
       try {
-        const saved = localStorage.getItem('impa_egg_tracker_data');
-        if (saved) {
-          this.eggs = JSON.parse(saved);
+        const savedEggs = localStorage.getItem('impa_egg_tracker_data');
+        const savedChicks = localStorage.getItem('impa_chicks_data');
+        const savedClutch = localStorage.getItem('impa_clutch_completed');
+        if (savedEggs) {
+          this.eggs = JSON.parse(savedEggs);
+          if (savedChicks) this.chicks = JSON.parse(savedChicks);
+          if (savedClutch !== null) this.clutchCompleted = savedClutch === 'true';
+          this.syncHatchedEggsWithChicks();
           return;
         }
       } catch (e) {
@@ -82,8 +94,15 @@ class EggTrackerApp {
           if (nestData.adminPinHash) {
             this.activePinHash = nestData.adminPinHash;
           }
+          if (nestData.clutchCompleted !== undefined) {
+            this.clutchCompleted = Boolean(nestData.clutchCompleted);
+          }
+          if (Array.isArray(nestData.chicks)) {
+            this.chicks = nestData.chicks;
+          }
           if (Array.isArray(nestData.eggs) && nestData.eggs.length > 0) {
             this.eggs = nestData.eggs;
+            this.syncHatchedEggsWithChicks();
             // Si es admin, guardar copia local
             if (this.isAdmin) {
               this.saveData();
@@ -98,9 +117,14 @@ class EggTrackerApp {
 
     // Fallback: verificar localStorage
     try {
-      const saved = localStorage.getItem('impa_egg_tracker_data');
-      if (saved) {
-        this.eggs = JSON.parse(saved);
+      const savedEggs = localStorage.getItem('impa_egg_tracker_data');
+      const savedChicks = localStorage.getItem('impa_chicks_data');
+      const savedClutch = localStorage.getItem('impa_clutch_completed');
+      if (savedEggs) {
+        this.eggs = JSON.parse(savedEggs);
+        if (savedChicks) this.chicks = JSON.parse(savedChicks);
+        if (savedClutch !== null) this.clutchCompleted = savedClutch === 'true';
+        this.syncHatchedEggsWithChicks();
         return;
       }
     } catch (e) {
@@ -118,10 +142,39 @@ class EggTrackerApp {
         notes: 'Primer huevo de la nidada de Impa. Puesta detectada el 17 de septiembre a las 16:32 aprox. Incubación estándar de 21 días.'
       }
     ];
+    this.chicks = [];
+    this.clutchCompleted = false;
 
     if (this.isAdmin) {
       this.saveData();
     }
+  }
+
+  syncHatchedEggsWithChicks() {
+    if (!Array.isArray(this.chicks)) this.chicks = [];
+    this.eggs.forEach(egg => {
+      if (egg.status === 'hatched') {
+        const exists = this.chicks.some(c => c.eggId === egg.id || c.eggNumber === egg.number);
+        if (!exists) {
+          const hatchDate = egg.hatchDate || new Date().toISOString();
+          this.chicks.push({
+            id: 'chick_' + egg.id,
+            eggId: egg.id,
+            eggNumber: egg.number,
+            name: `Pollo #${egg.number} de Impa`,
+            hatchDate: hatchDate,
+            ringNumber: '',
+            mutation: 'Perlado (Hijo/a de Impa)',
+            initialWeight: 4.5,
+            weightLogs: [
+              { date: hatchDate, weight: 4.5, note: 'Peso al nacer (Eclosión)' }
+            ],
+            milestonesDone: ['hatched'],
+            notes: egg.notes || ''
+          });
+        }
+      }
+    });
   }
 
   saveData() {
@@ -131,6 +184,8 @@ class EggTrackerApp {
     }
     try {
       localStorage.setItem('impa_egg_tracker_data', JSON.stringify(this.eggs));
+      localStorage.setItem('impa_chicks_data', JSON.stringify(this.chicks));
+      localStorage.setItem('impa_clutch_completed', this.clutchCompleted ? 'true' : 'false');
     } catch (e) {
       console.error('Error al guardar datos:', e);
     }
@@ -462,6 +517,7 @@ class EggTrackerApp {
     this.renderStats();
     this.renderNextEggBanner();
     this.renderEggsGrid();
+    this.renderChicksView();
   }
 
   renderStats() {
@@ -481,6 +537,21 @@ class EggTrackerApp {
     if (elHatched) elHatched.textContent = hatched;
   }
 
+  toggleClutchStatus() {
+    if (!this.isAdmin) {
+      this.openAdminLoginModal();
+      return;
+    }
+    this.clutchCompleted = !this.clutchCompleted;
+    this.saveData();
+    this.render();
+    if (this.clutchCompleted) {
+      this.showToast('Puesta de huevos marcada como finalizada. Se detuvo la estimación de 48h.', 'stop_circle');
+    } else {
+      this.showToast('Puesta de huevos reanudada. Estimando ventana de 48h.', 'play_circle');
+    }
+  }
+
   renderNextEggBanner() {
     const banner = document.getElementById('next-egg-banner');
     if (!banner) return;
@@ -490,32 +561,89 @@ class EggTrackerApp {
       return;
     }
 
+    // Si la puesta ha sido detenida por el dueño (nidada cerrada)
+    if (this.clutchCompleted) {
+      banner.className = 'glass-card p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 border-emerald-500/40 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent shrink-0';
+      banner.innerHTML = `
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <span class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-emerald-600 text-white font-label-caps font-bold text-[9px] sm:text-[10px] tracking-wider uppercase shrink-0">
+            NIDADA COMPLETA
+          </span>
+          <div class="min-w-0">
+            <h3 class="font-display font-bold text-xs sm:text-base text-main truncate">
+              Puesta Finalizada • ${this.eggs.length} ${this.eggs.length === 1 ? 'huevo' : 'huevos'} en seguimiento
+            </h3>
+            <p class="text-[11px] sm:text-xs text-muted font-label-caps truncate">
+              Impa concluyó la puesta. La incubación y el cuidado de los pichones están en curso activo.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <div class="font-data font-bold text-xs sm:text-sm text-emerald-400 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-black/30 border border-emerald-500/30 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>PUESTA DETENIDA</span>
+          </div>
+          ${this.isAdmin ? `
+            <button onclick="app.toggleClutchStatus()" class="btn-secondary py-1.5 px-3 rounded-lg text-xs font-label-caps flex items-center gap-1 text-accent border-accent/40 hover:bg-accent/10" title="Reabrir la estimación si Impa pone otro huevo">
+              <span class="material-symbols-outlined text-[15px]">play_circle</span>
+              <span class="hidden sm:inline">REANUDAR PUESTA</span>
+              <span class="sm:hidden">REANUDAR</span>
+            </button>
+          ` : ''}
+        </div>
+      `;
+      banner.style.display = 'flex';
+      return;
+    }
+
     // Ordenar huevos por fecha de puesta
     const sorted = [...this.eggs].sort((a, b) => new Date(a.layDate) - new Date(b.layDate));
     const lastEgg = sorted[sorted.length - 1];
     const lastLayTime = new Date(lastEgg.layDate).getTime();
     const nextLayTargetMs = lastLayTime + (EGG_INTERVAL_HOURS * MS_PER_HOUR);
     const nextNumber = sorted.length + 1;
-
-    const titleEl = document.getElementById('next-egg-title');
-    const descEl = document.getElementById('next-egg-desc');
-    const timerEl = document.getElementById('next-egg-timer');
-
-    if (titleEl) titleEl.textContent = `Próximo huevo estimado: Huevo #${nextNumber}`;
-    if (descEl) descEl.textContent = `Las ninfas suelen poner cada ~48 horas. Última puesta: ${this.formatDate(new Date(lastLayTime))}`;
-
     const now = Date.now();
     const msRemaining = nextLayTargetMs - now;
 
-    if (timerEl) {
-      if (msRemaining > 0) {
-        timerEl.textContent = `Faltan ~${this.formatDuration(msRemaining)}`;
-        timerEl.className = 'font-data font-bold text-sm sm:text-base text-accent px-3 py-1.5 rounded-lg bg-black/30 border border-accent/30';
-      } else {
-        timerEl.textContent = `¡Ventana de puesta abierta! (hace ${this.formatDuration(Math.abs(msRemaining))})`;
-        timerEl.className = 'font-data font-bold text-sm sm:text-base text-emerald-400 px-3 py-1.5 rounded-lg bg-black/30 border border-emerald-500/40 animate-pulse';
-      }
+    let timerText = '';
+    let timerClass = '';
+
+    if (msRemaining > 0) {
+      timerText = `Faltan ~${this.formatDuration(msRemaining)}`;
+      timerClass = 'text-accent border-accent/30';
+    } else {
+      timerText = `¡Ventana de puesta abierta! (hace ${this.formatDuration(Math.abs(msRemaining))})`;
+      timerClass = 'text-emerald-400 border-emerald-500/40 animate-pulse';
     }
+
+    banner.className = 'glass-card p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 border-accent/30 bg-gradient-to-r from-accent/10 to-transparent shrink-0';
+    banner.innerHTML = `
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <span class="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-accent text-white font-label-caps font-bold text-[9px] sm:text-[10px] tracking-wider uppercase shrink-0">
+          PRÓXIMA PUESTA
+        </span>
+        <div class="min-w-0">
+          <h3 id="next-egg-title" class="font-display font-bold text-xs sm:text-base text-main truncate">
+            Próximo huevo estimado: Huevo #${nextNumber}
+          </h3>
+          <p id="next-egg-desc" class="text-[11px] sm:text-xs text-muted font-label-caps truncate">
+            Las ninfas suelen poner cada ~48 horas. Última puesta: ${this.formatDate(new Date(lastLayTime))}
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <div class="font-data font-bold text-xs sm:text-base ${timerClass} px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-black/30 border" id="next-egg-timer">
+          ${timerText}
+        </div>
+        ${this.isAdmin ? `
+          <button onclick="app.toggleClutchStatus()" class="btn-secondary py-1.5 px-3 rounded-lg text-xs font-label-caps flex items-center gap-1 text-red-400 border-red-500/40 hover:bg-red-500/10" title="Detener el contador de 48h si Impa concluyó su puesta">
+            <span class="material-symbols-outlined text-[15px]">stop_circle</span>
+            <span class="hidden sm:inline">DETENER PUESTA</span>
+            <span class="sm:hidden">DETENER</span>
+          </button>
+        ` : ''}
+      </div>
+    `;
 
     banner.style.display = 'flex';
   }
@@ -563,6 +691,8 @@ class EggTrackerApp {
         ? `Faltan ${this.formatDuration(m.msToHatch)}` 
         : `¡Periodo cumplido! (${this.formatDate(m.hatchDate)})`;
 
+      const isHatched = egg.status === 'hatched';
+
       return `
         <div class="glass-card p-3.5 sm:p-5 flex flex-col gap-3.5 sm:gap-4 border-theme hover:border-accent/40 transition-all relative group" id="card-${egg.id}">
           
@@ -607,7 +737,7 @@ class EggTrackerApp {
 
             <div class="flex items-center justify-between p-2 rounded-lg bg-input/30 border border-theme">
               <span class="text-muted flex items-center gap-1 shrink-0">
-                <span class="material-symbols-outlined text-[16px] text-emerald-400">pest_control_rodent</span>
+                <span class="material-symbols-outlined text-[16px] text-emerald-400">nest_cam_stand</span>
                 <span class="hidden xs:inline">Eclosión (Día 21):</span>
                 <span class="xs:hidden">Día 21:</span>
               </span>
@@ -620,10 +750,18 @@ class EggTrackerApp {
           <!-- Acciones de la Tarjeta (Diferenciadas por Rol) -->
           <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 pt-2 border-t border-theme">
             <!-- Botón de desarrollo (abierto a todos) -->
-            <button class="btn-primary flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps tracking-wider flex items-center justify-center gap-1 shadow-sm min-w-[110px]" onclick="app.openVisualizerForEgg('${egg.id}')">
+            <button class="btn-primary flex-1 py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps tracking-wider flex items-center justify-center gap-1 shadow-sm min-w-[100px]" onclick="app.openVisualizerForEgg('${egg.id}')">
               <span class="material-symbols-outlined text-[16px]">biotech</span>
               <span>VER DÍA ${m.currentDay}</span>
             </button>
+
+            ${isHatched ? `
+              <!-- Botón Ver Pollo (si ya eclosionó) -->
+              <button class="btn-secondary py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps flex items-center justify-center gap-1 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/10 shrink-0" onclick="app.focusChick('${egg.id}')" title="Ver seguimiento y crecimiento de este pollo">
+                <span class="text-sm">🐥</span>
+                <span>VER POLLO</span>
+              </button>
+            ` : ''}
 
             <!-- Botón de descarga de recordatorio individual (abierto a todos) -->
             <button class="btn-secondary py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps flex items-center justify-center gap-1 text-accent border-accent/30 hover:border-accent hover:bg-accent/10 shrink-0" onclick="app.downloadIcsForEgg('${egg.id}')" title="Descargar recordatorios a tu calendario (.ics)">
@@ -632,6 +770,14 @@ class EggTrackerApp {
             </button>
 
             ${this.isAdmin ? `
+              ${!isHatched ? `
+                <!-- Botón ¡Eclosionó! directo para Administrador -->
+                <button class="btn-secondary py-2 px-2.5 sm:px-3 rounded-xl text-xs font-label-caps text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/15 flex items-center gap-1 shrink-0" onclick="app.openHatchModal('${egg.id}')" title="Registrar que este huevo ya eclosionó">
+                  <span class="text-sm leading-none">🐣</span>
+                  <span>¡ECLOSIONÓ!</span>
+                </button>
+              ` : ''}
+
               <!-- Acciones exclusivas del Administrador -->
               <button class="btn-secondary py-2 px-2 sm:px-2.5 rounded-xl text-xs font-label-caps text-amber-400 hover:bg-amber-500/10" onclick="app.openChangeStatusModal('${egg.id}')" title="Cambiar estado de fertilidad">
                 <span class="material-symbols-outlined text-[16px]">tune</span>
@@ -652,26 +798,37 @@ class EggTrackerApp {
   // Actualización en vivo sin recargar el DOM
   updateLiveTickers() {
     if (typeof document === 'undefined' || !document.querySelector) return;
+    
+    // 1. Tickers de huevos
     this.eggs.forEach(egg => {
       const m = this.getEggMetrics(egg);
       
       const candlingEl = document.querySelector(`[data-candling-for="${egg.id}"]`);
       if (candlingEl) {
         candlingEl.textContent = m.msToCandling > 0 
-          ? `Faltan ${this.formatDuration(m.msToCandling)}`
+          ? `Faltan ${this.formatDuration(m.msToCandling)}` 
           : `¡Listo para ovoscopia! (${this.formatDate(m.candlingDate)})`;
       }
 
       const hatchEl = document.querySelector(`[data-hatch-for="${egg.id}"]`);
       if (hatchEl) {
         hatchEl.textContent = m.msToHatch > 0 
-          ? `Faltan ${this.formatDuration(m.msToHatch)}`
+          ? `Faltan ${this.formatDuration(m.msToHatch)}` 
           : `¡Periodo cumplido! (${this.formatDate(m.hatchDate)})`;
       }
     });
 
-    // Actualizar timer del próximo huevo
-    if (this.eggs.length > 0) {
+    // 2. Tickers de pollos (edad viva)
+    this.chicks.forEach(chick => {
+      const m = this.getChickMetrics(chick);
+      const ageEl = document.querySelector(`[data-chick-age-for="${chick.id}"]`);
+      if (ageEl) {
+        ageEl.textContent = `${m.ageDays} días, ${m.ageHours} horas`;
+      }
+    });
+
+    // 3. Banner de próximo huevo (solo si la puesta está activa)
+    if (!this.clutchCompleted && this.eggs.length > 0) {
       const sorted = [...this.eggs].sort((a, b) => new Date(a.layDate) - new Date(b.layDate));
       const lastEgg = sorted[sorted.length - 1];
       const lastLayTime = new Date(lastEgg.layDate).getTime();
@@ -685,6 +842,582 @@ class EggTrackerApp {
           timerEl.textContent = `¡Ventana de puesta abierta! (hace ${this.formatDuration(Math.abs(msRemaining))})`;
         }
       }
+    }
+  }
+
+  // =========================================================================
+  // Gestión y Seguimiento de Pollos (Día 0 a Día 30)
+  // =========================================================================
+
+  setupChickVisualizer() {
+    if (typeof ChickVisualizer !== 'undefined') {
+      const container = document.getElementById('chick-visualizer-container');
+      if (container && !window.chickVis) {
+        window.chickVis = new ChickVisualizer('chick-visualizer-container');
+        this.syncChicksWithVisualizer();
+      }
+    }
+  }
+
+  syncChicksWithVisualizer() {
+    if (!window.chickVis) return;
+    const allWeights = [];
+    this.chicks.forEach(c => {
+      if (Array.isArray(c.weightLogs)) {
+        c.weightLogs.forEach(w => {
+          const ms = new Date(w.date).getTime() - new Date(c.hatchDate).getTime();
+          const day = Math.max(0, Math.floor(ms / MS_PER_DAY));
+          allWeights.push({ day, weight: w.weight, chickName: c.name });
+        });
+      }
+    });
+    window.chickVis.setRecordedWeights(allWeights);
+  }
+
+  setChicksTab(tab) {
+    this.chicksTab = tab;
+    this.renderChicksView();
+  }
+
+  renderChicksView() {
+    const listTabBtn = document.getElementById('btn-chicks-tab-list');
+    const diagTabBtn = document.getElementById('btn-chicks-tab-diag');
+    const guidesTabBtn = document.getElementById('btn-chicks-tab-guides');
+
+    const listSec = document.getElementById('chicks-sec-list');
+    const diagSec = document.getElementById('chicks-sec-diag');
+    const guidesSec = document.getElementById('chicks-sec-guides');
+
+    if (listTabBtn) listTabBtn.className = `px-3 sm:px-4 py-2 rounded-xl text-xs font-label-caps font-bold transition-all ${this.chicksTab === 'list' ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-main'}`;
+    if (diagTabBtn) diagTabBtn.className = `px-3 sm:px-4 py-2 rounded-xl text-xs font-label-caps font-bold transition-all ${this.chicksTab === 'diagram' ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-main'}`;
+    if (guidesTabBtn) guidesTabBtn.className = `px-3 sm:px-4 py-2 rounded-xl text-xs font-label-caps font-bold transition-all ${this.chicksTab === 'guides' ? 'bg-accent text-white shadow-sm' : 'text-muted hover:text-main'}`;
+
+    if (listSec) listSec.style.display = this.chicksTab === 'list' ? 'flex' : 'none';
+    if (diagSec) diagSec.style.display = this.chicksTab === 'diagram' ? 'flex' : 'none';
+    if (guidesSec) guidesSec.style.display = this.chicksTab === 'guides' ? 'flex' : 'none';
+
+    // 1. Renderizar lista de pollos nacidos
+    const listContainer = document.getElementById('chicks-list-grid');
+    if (listContainer) {
+      if (this.chicks.length === 0) {
+        listContainer.innerHTML = `
+          <div class="col-span-full glass-card p-8 flex flex-col items-center justify-center text-center gap-3">
+            <span class="text-5xl leading-none">🐣</span>
+            <h3 class="font-display font-bold text-base text-main">Aún no hay pollitos nacidos registrados</h3>
+            <p class="text-xs text-muted max-w-md">
+              Cuando los huevos completen los 21 días de incubación y eclosionen, pulsa el botón <strong>"¡Eclosionó!"</strong> en la tarjeta del huevo correspondiente para iniciar su seguimiento de peso, anillado y plumaje hasta el mes de vida.
+            </p>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <button onclick="app.setChicksTab('diagram')" class="btn-primary py-2 px-4 rounded-xl text-xs font-label-caps flex items-center gap-1.5 shadow-sm">
+                <span class="material-symbols-outlined text-[16px]">biotech</span>
+                <span>EXPLORAR ESQUEMA DÍA 0 A 30</span>
+              </button>
+              <button onclick="app.setChicksTab('guides')" class="btn-secondary py-2 px-4 rounded-xl text-xs font-label-caps flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">menu_book</span>
+                <span>VER GUÍA DE CRIANZA</span>
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        listContainer.innerHTML = this.chicks.map(chick => this.renderChickCard(chick)).join('');
+      }
+    }
+
+    // 2. Si estamos en tab de esquema, asegurar sincronización y render
+    if (this.chicksTab === 'diagram') {
+      if (!window.chickVis) {
+        this.setupChickVisualizer();
+      }
+      if (window.chickVis) {
+        this.syncChicksWithVisualizer();
+        window.chickVis.render();
+      }
+    }
+
+    // 3. Renderizar guías críticas de crianza
+    const guidesContainer = document.getElementById('chicks-guides-content');
+    if (guidesContainer && guidesContainer.children.length === 0) {
+      this.renderChicksGuides();
+    }
+  }
+
+  renderChickCard(chick) {
+    const m = this.getChickMetrics(chick);
+    const day = m.currentDay;
+    const stage = (typeof CHICK_STAGES !== 'undefined' && CHICK_STAGES[day]) ? CHICK_STAGES[day] : null;
+    const expectedAvg = stage ? stage.weightAvg : 50;
+    const expectedMin = stage ? stage.weightMin : 40;
+    const expectedMax = stage ? stage.weightMax : 60;
+
+    const latestWeight = m.latestWeight;
+    const isWeightNormal = latestWeight >= expectedMin && latestWeight <= expectedMax;
+    const isWeightLow = latestWeight < expectedMin;
+    const weightStatusClass = isWeightNormal 
+      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' 
+      : (isWeightLow ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' : 'bg-blue-500/15 text-blue-400 border-blue-500/30');
+    const weightStatusLabel = isWeightNormal ? 'PESO SALUDABLE' : (isWeightLow ? 'BAJO PESO' : 'SOBRE EL PROMEDIO');
+
+    const ringStatus = chick.ringNumber ? `Anilla: ${this.escapeHtml(chick.ringNumber)}` : (day >= 6 && day <= 8 ? '¡PERIODO DE ANILLADO (4.5mm)!' : (day < 6 ? 'Anillado ideal: Días 6 a 8' : 'Sin anillar'));
+    const ringBadgeClass = chick.ringNumber ? 'bg-sky-500/15 text-sky-400 border-sky-500/30' : (day >= 6 && day <= 8 ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 animate-pulse' : 'bg-slate-500/15 text-slate-400 border-slate-500/30');
+
+    // Progreso del mes (0 a 30 días)
+    const monthProgressPct = Math.min(100, Math.max(0, (day / 30) * 100));
+
+    // Formatear pesajes recientes
+    const logs = Array.isArray(chick.weightLogs) ? [...chick.weightLogs].reverse() : [];
+
+    return `
+      <div class="glass-card p-4 sm:p-5 flex flex-col gap-4 border-theme hover:border-accent/40 transition-all relative" id="card-chick-${chick.id}">
+        
+        <!-- Encabezado de la Tarjeta del Pollo -->
+        <div class="flex items-start justify-between gap-2.5">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-2xl shrink-0 shadow-sm">
+              🐥
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <h3 class="font-display font-bold text-base sm:text-lg text-main truncate">${this.escapeHtml(chick.name)}</h3>
+                <span class="px-2 py-0.5 rounded text-[10px] font-label-caps font-bold bg-accent/20 text-accent border border-accent/30 shrink-0">
+                  HUEVO #${chick.eggNumber || 1}
+                </span>
+              </div>
+              <p class="text-xs text-muted font-label-caps mt-0.5">
+                Nació: ${this.formatDate(new Date(chick.hatchDate))} • Mutación: ${this.escapeHtml(chick.mutation || 'Perlado')}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-end gap-1 shrink-0">
+            <span class="px-2.5 py-1 rounded-md text-[10px] font-label-caps font-bold border ${ringBadgeClass}">
+              ${ringStatus}
+            </span>
+          </div>
+        </div>
+
+        <!-- Indicador de Edad en Vivo y Barra de Desarrollo de 30 Días -->
+        <div class="p-3 rounded-xl bg-input/40 border border-theme flex flex-col gap-2">
+          <div class="flex items-center justify-between text-xs font-label-caps">
+            <span class="text-muted flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px] text-accent">schedule</span>
+              <span>Edad actual:</span>
+              <strong class="font-data text-main text-xs sm:text-sm ml-1" data-chick-age-for="${chick.id}">
+                ${m.ageDays} días, ${m.ageHours} horas
+              </strong>
+            </span>
+            <span class="font-data font-bold text-accent">DÍA ${day} DE 30 (${monthProgressPct.toFixed(0)}%)</span>
+          </div>
+          <div class="w-full h-2.5 rounded-full bg-black/40 border border-theme overflow-hidden p-0.5">
+            <div class="h-full rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-emerald-400 transition-all duration-500" style="width: ${monthProgressPct}%;"></div>
+          </div>
+        </div>
+
+        <!-- Requisitos Biológicos & Cuidados del Día Actual -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-label-caps">
+          <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-1">
+            <span class="text-muted flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px] text-red-400">thermostat</span>
+              <span>Temperatura Nido</span>
+            </span>
+            <span class="font-data font-bold text-main text-xs sm:text-sm">${stage ? stage.temperature : '28°C'}</span>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-1">
+            <span class="text-muted flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px] text-amber-400">restaurant</span>
+              <span>Alimentación</span>
+            </span>
+            <span class="font-data font-bold text-main text-xs sm:text-sm">${stage ? stage.feedingFrequency : '3 tomas/día'}</span>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-input/30 border border-theme flex flex-col gap-1">
+            <span class="text-muted flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px] text-sky-400">scale</span>
+              <span>Peso Actual / Esperado</span>
+            </span>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-data font-bold text-accent text-xs sm:text-sm">${latestWeight.toFixed(1)}g</span>
+              <span class="text-[10px] text-muted">(Esperado: ${expectedAvg}g)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fase Morfológica Actual -->
+        <div class="p-3 rounded-xl bg-accent/10 border border-accent/20 flex flex-col gap-1">
+          <div class="flex items-center justify-between">
+            <span class="font-label-caps text-xs font-bold text-accent">${stage ? stage.stage : 'Desarrollo'}</span>
+            <span class="px-2 py-0.5 rounded text-[9px] font-label-caps font-bold border ${weightStatusClass}">${weightStatusLabel}</span>
+          </div>
+          <p class="text-xs text-main leading-relaxed font-body">${stage ? stage.summary : 'Crecimiento activo del pollo.'}</p>
+        </div>
+
+        <!-- Registro de Pesajes Recientes -->
+        <div class="flex flex-col gap-1.5 border-t border-theme pt-3">
+          <div class="flex items-center justify-between">
+            <span class="font-label-caps text-[11px] text-muted font-bold tracking-wider">HISTORIAL DE PESO (${logs.length} registros)</span>
+            ${this.isAdmin ? `
+              <button onclick="app.openAddWeightModal('${chick.id}')" class="text-accent hover:underline text-[11px] font-label-caps font-bold flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">add</span>
+                <span>REGISTRAR PESO</span>
+              </button>
+            ` : ''}
+          </div>
+          <div class="flex gap-2 overflow-x-auto custom-scrollbar py-1">
+            ${logs.slice(0, 6).map(log => `
+              <div class="p-2 rounded-lg bg-input/50 border border-theme shrink-0 flex flex-col items-center min-w-[75px] text-center">
+                <span class="font-data font-bold text-xs text-main">${Number(log.weight).toFixed(1)}g</span>
+                <span class="text-[9px] text-muted font-label-caps mt-0.5">${new Date(log.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Acciones de la Tarjeta del Pollo -->
+        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-theme">
+          <button class="btn-primary flex-1 py-2 px-3 rounded-xl text-xs font-label-caps flex items-center justify-center gap-1.5 shadow-sm" onclick="app.focusChickVisualizer('${chick.id}')">
+            <span class="material-symbols-outlined text-[16px]">biotech</span>
+            <span>VER EN ESQUEMA DÍA ${day}</span>
+          </button>
+
+          ${this.isAdmin ? `
+            <button class="btn-secondary py-2 px-3 rounded-xl text-xs font-label-caps text-accent border-accent/30 hover:bg-accent/10 flex items-center gap-1" onclick="app.openAddWeightModal('${chick.id}')" title="Añadir pesaje de hoy">
+              <span class="material-symbols-outlined text-[16px]">scale</span>
+              <span class="hidden sm:inline">PESAR</span>
+            </button>
+            <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps" onclick="app.openEditChickModal('${chick.id}')" title="Editar datos del pollo">
+              <span class="material-symbols-outlined text-[16px]">edit</span>
+            </button>
+            <button class="btn-secondary py-2 px-2.5 rounded-xl text-xs font-label-caps text-red-400 hover:bg-red-500/10" onclick="app.deleteChick('${chick.id}')" title="Eliminar ficha de pollo">
+              <span class="material-symbols-outlined text-[16px]">delete</span>
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  renderChicksGuides() {
+    const container = document.getElementById('chicks-guides-content');
+    if (!container) return;
+
+    if (typeof CHICK_CARE_GUIDES === 'undefined' || !Array.isArray(CHICK_CARE_GUIDES)) {
+      container.innerHTML = '<p class="text-xs text-muted">Guías no disponibles.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        ${CHICK_CARE_GUIDES.map(guide => `
+          <div class="glass-card p-4 sm:p-5 flex flex-col gap-3 border-theme hover:border-accent/40 transition-all">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center text-accent text-xl shrink-0">
+                <span class="material-symbols-outlined text-[22px]">${guide.icon || 'info'}</span>
+              </div>
+              <div>
+                <h4 class="font-display font-bold text-sm sm:text-base text-main leading-snug">${this.escapeHtml(guide.title)}</h4>
+                <p class="text-[11px] text-accent font-label-caps mt-0.5">${this.escapeHtml(guide.window || 'Periodo crítico')}</p>
+              </div>
+            </div>
+            <p class="text-xs text-muted leading-relaxed font-body">${this.escapeHtml(guide.description)}</p>
+            
+            <div class="p-3 rounded-xl bg-input/40 border border-theme flex flex-col gap-1 text-xs">
+              <span class="font-label-caps font-bold text-main text-[11px] flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px] text-emerald-400">check_circle</span>
+                <span>PUNTOS CLAVE Y PROCEDIMIENTO</span>
+              </span>
+              <ul class="list-disc list-inside text-muted space-y-1 text-xs mt-1">
+                ${guide.steps.map(s => `<li>${this.escapeHtml(s)}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  getChickMetrics(chick) {
+    const hatchTime = new Date(chick.hatchDate).getTime();
+    const now = Date.now();
+    const elapsedMs = Math.max(0, now - hatchTime);
+
+    const ageDays = Math.floor(elapsedMs / MS_PER_DAY);
+    const ageHours = Math.floor((elapsedMs % MS_PER_DAY) / MS_PER_HOUR);
+    const currentDay = Math.min(30, ageDays);
+
+    let latestWeight = chick.initialWeight || 4.5;
+    if (Array.isArray(chick.weightLogs) && chick.weightLogs.length > 0) {
+      latestWeight = chick.weightLogs[chick.weightLogs.length - 1].weight;
+    }
+
+    return {
+      elapsedMs,
+      ageDays,
+      ageHours,
+      currentDay,
+      latestWeight
+    };
+  }
+
+  focusChick(eggIdOrChickId) {
+    let chick = this.chicks.find(c => c.id === eggIdOrChickId || c.eggId === eggIdOrChickId);
+    if (!chick) {
+      // Si el huevo está marcado como hatched pero no hay chick aún, sincronizar
+      this.syncHatchedEggsWithChicks();
+      chick = this.chicks.find(c => c.id === eggIdOrChickId || c.eggId === eggIdOrChickId);
+    }
+
+    if (typeof showView === 'function') {
+      showView('chicks');
+    }
+    this.setChicksTab('list');
+
+    if (chick) {
+      setTimeout(() => {
+        const el = document.getElementById(`card-chick-${chick.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('border-accent');
+          setTimeout(() => el.classList.remove('border-accent'), 2500);
+        }
+      }, 200);
+    }
+  }
+
+  focusChickVisualizer(chickId) {
+    const chick = this.chicks.find(c => c.id === chickId);
+    if (!chick) return;
+
+    const m = this.getChickMetrics(chick);
+    if (typeof showView === 'function') {
+      showView('chicks');
+    }
+    this.setChicksTab('diagram');
+
+    if (window.chickVis) {
+      window.chickVis.setDay(m.currentDay);
+    }
+  }
+
+  // =========================================================================
+  // Modales de Eclosión, Pesaje y Edición de Pollos
+  // =========================================================================
+
+  openHatchModal(eggId) {
+    if (!this.isAdmin) {
+      this.openAdminLoginModal();
+      return;
+    }
+    const egg = this.eggs.find(e => e.id === eggId);
+    if (!egg) return;
+    this.activeEggForHatch = egg;
+
+    const titleEl = document.getElementById('hatch-modal-egg-title');
+    if (titleEl) titleEl.textContent = `Registrar Nacimiento: ${egg.name}`;
+
+    const dateInput = document.getElementById('form-hatch-date');
+    if (dateInput) {
+      const now = new Date();
+      dateInput.value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    }
+
+    const weightInput = document.getElementById('form-hatch-weight');
+    if (weightInput) weightInput.value = '4.5';
+
+    const ringInput = document.getElementById('form-hatch-ring');
+    if (ringInput) ringInput.value = '';
+
+    const nameInput = document.getElementById('form-hatch-name');
+    if (nameInput) nameInput.value = `Pollo #${egg.number} de Impa`;
+
+    const mutationInput = document.getElementById('form-hatch-mutation');
+    if (mutationInput) mutationInput.value = 'Perlado (Hijo/a de Impa)';
+
+    const notesInput = document.getElementById('form-hatch-notes');
+    if (notesInput) notesInput.value = 'Eclosión natural sin asistencia. Buen vigor y buche limpio.';
+
+    this.openModal('modal-hatch-egg');
+  }
+
+  confirmHatchEgg() {
+    if (!this.isAdmin || !this.activeEggForHatch) return;
+    const egg = this.activeEggForHatch;
+
+    const dateVal = document.getElementById('form-hatch-date')?.value;
+    const weightVal = parseFloat(document.getElementById('form-hatch-weight')?.value) || 4.5;
+    const nameVal = document.getElementById('form-hatch-name')?.value?.trim() || `Pollo #${egg.number} de Impa`;
+    const ringVal = document.getElementById('form-hatch-ring')?.value?.trim() || '';
+    const mutationVal = document.getElementById('form-hatch-mutation')?.value?.trim() || 'Perlado (Hijo/a de Impa)';
+    const notesVal = document.getElementById('form-hatch-notes')?.value?.trim() || '';
+
+    const hatchDate = dateVal ? new Date(dateVal).toISOString() : new Date().toISOString();
+
+    // Actualizar estado del huevo
+    egg.status = 'hatched';
+    egg.hatchDate = hatchDate;
+
+    // Crear o actualizar ficha del pollo
+    let chick = this.chicks.find(c => c.eggId === egg.id || c.eggNumber === egg.number);
+    if (!chick) {
+      chick = {
+        id: 'chick_' + egg.id,
+        eggId: egg.id,
+        eggNumber: egg.number,
+        name: nameVal,
+        hatchDate: hatchDate,
+        ringNumber: ringVal,
+        mutation: mutationVal,
+        initialWeight: weightVal,
+        weightLogs: [
+          { date: hatchDate, weight: weightVal, note: 'Peso al nacer (Eclosión)' }
+        ],
+        milestonesDone: ['hatched'],
+        notes: notesVal
+      };
+      this.chicks.push(chick);
+    } else {
+      chick.name = nameVal;
+      chick.hatchDate = hatchDate;
+      chick.ringNumber = ringVal;
+      chick.mutation = mutationVal;
+      chick.initialWeight = weightVal;
+      if (!chick.weightLogs || chick.weightLogs.length === 0) {
+        chick.weightLogs = [{ date: hatchDate, weight: weightVal, note: 'Peso al nacer' }];
+      }
+    }
+
+    this.saveData();
+    this.closeModal('modal-hatch-egg');
+    this.render();
+    this.showToast(`¡Felicidades! Eclosionó el ${egg.name}. Se ha creado su ficha en la pestaña POLLOS.`, 'celebration');
+  }
+
+  openAddWeightModal(chickId) {
+    if (!this.isAdmin) {
+      this.openAdminLoginModal();
+      return;
+    }
+    const chick = this.chicks.find(c => c.id === chickId);
+    if (!chick) return;
+    this.activeChickForWeight = chick;
+
+    const m = this.getChickMetrics(chick);
+    const day = m.currentDay;
+    const stage = typeof CHICK_STAGES !== 'undefined' ? CHICK_STAGES[day] : null;
+
+    const titleEl = document.getElementById('add-weight-modal-title');
+    if (titleEl) titleEl.textContent = `Registrar Peso: ${chick.name} (Día ${day})`;
+
+    const refEl = document.getElementById('add-weight-expected-ref');
+    if (refEl && stage) {
+      refEl.textContent = `Rango saludable Día ${day}: ${stage.weightMin}g - ${stage.weightMax}g (Promedio: ${stage.weightAvg}g)`;
+    }
+
+    const dateInput = document.getElementById('form-chick-weight-date');
+    if (dateInput) {
+      const now = new Date();
+      dateInput.value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    }
+
+    const weightInput = document.getElementById('form-chick-weight-val');
+    if (weightInput) {
+      weightInput.value = m.latestWeight ? m.latestWeight.toFixed(1) : (stage ? stage.weightAvg : '15');
+      setTimeout(() => weightInput.focus(), 150);
+    }
+
+    const notesInput = document.getElementById('form-chick-weight-notes');
+    if (notesInput) notesInput.value = 'Pesaje con buche vacío';
+
+    this.openModal('modal-add-weight');
+  }
+
+  saveChickWeight() {
+    if (!this.isAdmin || !this.activeChickForWeight) return;
+    const chick = this.activeChickForWeight;
+
+    const dateVal = document.getElementById('form-chick-weight-date')?.value;
+    const weightVal = parseFloat(document.getElementById('form-chick-weight-val')?.value);
+    const noteVal = document.getElementById('form-chick-weight-notes')?.value?.trim() || '';
+
+    if (!weightVal || isNaN(weightVal) || weightVal <= 0) {
+      alert('Por favor introduce un peso válido en gramos.');
+      return;
+    }
+
+    const logEntry = {
+      date: dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),
+      weight: Math.round(weightVal * 10) / 10,
+      note: noteVal
+    };
+
+    if (!Array.isArray(chick.weightLogs)) chick.weightLogs = [];
+    chick.weightLogs.push(logEntry);
+    chick.weightLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    this.saveData();
+    this.closeModal('modal-add-weight');
+    this.syncChicksWithVisualizer();
+    this.renderChicksView();
+    this.showToast(`Pesaje registrado: ${weightVal}g para ${chick.name}`, 'scale');
+  }
+
+  openEditChickModal(chickId) {
+    if (!this.isAdmin) {
+      this.openAdminLoginModal();
+      return;
+    }
+    const chick = this.chicks.find(c => c.id === chickId);
+    if (!chick) return;
+    this.activeChickForEdit = chick;
+
+    const titleEl = document.getElementById('edit-chick-modal-title');
+    if (titleEl) titleEl.textContent = `Editar Ficha: ${chick.name}`;
+
+    const nameInput = document.getElementById('form-edit-chick-name');
+    if (nameInput) nameInput.value = chick.name || '';
+
+    const ringInput = document.getElementById('form-edit-chick-ring');
+    if (ringInput) ringInput.value = chick.ringNumber || '';
+
+    const mutationInput = document.getElementById('form-edit-chick-mutation');
+    if (mutationInput) mutationInput.value = chick.mutation || 'Perlado';
+
+    const notesInput = document.getElementById('form-edit-chick-notes');
+    if (notesInput) notesInput.value = chick.notes || '';
+
+    this.openModal('modal-edit-chick');
+  }
+
+  saveEditChick() {
+    if (!this.isAdmin || !this.activeChickForEdit) return;
+    const chick = this.activeChickForEdit;
+
+    const nameVal = document.getElementById('form-edit-chick-name')?.value?.trim();
+    const ringVal = document.getElementById('form-edit-chick-ring')?.value?.trim();
+    const mutationVal = document.getElementById('form-edit-chick-mutation')?.value?.trim();
+    const notesVal = document.getElementById('form-edit-chick-notes')?.value?.trim();
+
+    if (nameVal) chick.name = nameVal;
+    chick.ringNumber = ringVal || '';
+    chick.mutation = mutationVal || 'Perlado';
+    chick.notes = notesVal || '';
+
+    this.saveData();
+    this.closeModal('modal-edit-chick');
+    this.renderChicksView();
+    this.showToast(`Ficha de ${chick.name} actualizada con éxito.`);
+  }
+
+  deleteChick(chickId) {
+    if (!this.isAdmin) return;
+    const chick = this.chicks.find(c => c.id === chickId);
+    if (!chick) return;
+
+    if (confirm(`¿Estás seguro de eliminar el seguimiento de ${chick.name}?`)) {
+      this.chicks = this.chicks.filter(c => c.id !== chickId);
+      this.saveData();
+      this.renderChicksView();
+      this.showToast(`Ficha de ${chick.name} eliminada.`, 'delete');
     }
   }
 
@@ -1094,7 +1827,9 @@ class EggTrackerApp {
       species: "Nymphicus hollandicus",
       mother: "Impa",
       adminPinHash: this.activePinHash || this.DEFAULT_PIN_HASH,
-      eggs: this.eggs
+      clutchCompleted: this.clutchCompleted,
+      eggs: this.eggs,
+      chicks: this.chicks
     };
     return JSON.stringify(payload, null, 2);
   }
@@ -1122,8 +1857,15 @@ class EggTrackerApp {
   }
 
   exportBackup() {
-    const dataStr = JSON.stringify(this.eggs, null, 2);
-    this.triggerFileDownload(dataStr, `Respaldo_Nidada_Impa_${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
+    const backupData = {
+      version: '1.2.0',
+      exportedAt: new Date().toISOString(),
+      clutchCompleted: this.clutchCompleted,
+      eggs: this.eggs,
+      chicks: this.chicks
+    };
+    const dataStr = JSON.stringify(backupData, null, 2);
+    this.triggerFileDownload(dataStr, `Respaldo_Nidada_Pollos_Impa_${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
     this.showToast('Copia de respaldo JSON exportada.');
   }
 
@@ -1140,9 +1882,16 @@ class EggTrackerApp {
         const eggsList = Array.isArray(imported) ? imported : (imported.eggs && Array.isArray(imported.eggs) ? imported.eggs : null);
         if (eggsList) {
           this.eggs = eggsList;
+          if (Array.isArray(imported.chicks)) {
+            this.chicks = imported.chicks;
+          }
+          if (imported.clutchCompleted !== undefined) {
+            this.clutchCompleted = Boolean(imported.clutchCompleted);
+          }
+          this.syncHatchedEggsWithChicks();
           this.saveData();
           this.render();
-          this.showToast('¡Datos de la nidada importados correctamente!');
+          this.showToast('¡Datos de la nidada y pollitos importados correctamente!');
         } else {
           alert('El archivo no tiene el formato esperado.');
         }
