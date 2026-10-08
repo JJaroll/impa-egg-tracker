@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-03T22:35:48.003Z",
+  "updatedAt": "2026-10-08T20:34:32.313Z",
   "species": "Nymphicus hollandicus",
   "mother": "Impa",
   "adminPinHash": "4597da85b54b0215a8b5d536291aab6f1fb48952dd97698ee26a2fab58b8cdec",
@@ -10,8 +10,9 @@
       "number": 1,
       "name": "Huevo #1 de Impa",
       "layDate": "2026-09-17T13:32:00.000Z",
-      "status": "fertile",
-      "notes": "Primer huevo de la nidada de Impa."
+      "status": "hatched",
+      "notes": "Primer huevo de la nidada de Impa.",
+      "hatchDate": "2026-10-06T16:33:00.000Z"
     },
     {
       "id": "egg_1789828059539",
@@ -46,5 +47,27 @@
       "notes": ""
     }
   ],
-  "chicks": []
+  "chicks": [
+    {
+      "id": "chick_egg_1_impa",
+      "eggId": "egg_1_impa",
+      "eggNumber": 1,
+      "name": "Pollo #1 de Impa",
+      "hatchDate": "2026-10-06T16:33:00.000Z",
+      "ringNumber": "000",
+      "mutation": "Perlado (Hijo/a de Impa)",
+      "initialWeight": 4.5,
+      "weightLogs": [
+        {
+          "date": "2026-10-06T16:33:00.000Z",
+          "weight": 4.5,
+          "note": "Peso al nacer (Eclosión)"
+        }
+      ],
+      "milestonesDone": [
+        "hatched"
+      ],
+      "notes": "Eclosión natural sin asistencia. Buen vigor y buche limpio."
+    }
+  ]
 }
