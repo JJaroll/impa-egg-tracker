@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-08T22:47:19.891Z",
+  "updatedAt": "2026-10-12T04:07:09.420Z",
   "species": "Nymphicus hollandicus",
   "mother": "Impa",
   "adminPinHash": "4597da85b54b0215a8b5d536291aab6f1fb48952dd97698ee26a2fab58b8cdec",
@@ -36,7 +36,7 @@
       "number": 4,
       "name": "Huevo #4 de Impa",
       "layDate": "2026-09-22T21:24:00.000Z",
-      "status": "fertile",
+      "status": "failed",
       "notes": "4to huevo"
     },
     {
